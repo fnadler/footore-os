@@ -12,6 +12,11 @@
 >   **Re-implementar em TypeScript** (o projeto é 100% TS; não rodar Python).
 > - `_docs/referencia-skill/references/{clausulas,features,planos}.md` — fonte da verdade do texto das
 >   cláusulas, dos rótulos de features e dos valores por plano + mapa de nomenclatura legada.
+>   **Atualização (execução da Fase 1):** `features.md`/`planos.md` divergem entre si para AGENTE —
+>   `planos.md` tem uma linha "Análise de Mercado" que não existe em contrato nenhum e não lista
+>   "Número de Atletas"/"Atletas Agenciados"/"Agências", que `features.md` tem. Reconciliado contra o
+>   texto real dos 4 `.docx`-modelo (ELENKO confirma 15 linhas para agente, não 13). A partir de agora
+>   `src/lib/contratos/planos.ts` é a fonte da verdade operante — ver o comentário no topo do arquivo.
 > - `_docs/referencia-skill/assets/footlink-logo.png` — logo do cabeçalho.
 > - `_docs/referencia-skill/SKILL.md` — regras de negócio (ler para entender; não virar código do app).
 > - `_docs/contratos-modelo/*.docx` — 4 contratos-gabarito para validar a geração (ver seção 10).
