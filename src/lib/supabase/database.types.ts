@@ -325,6 +325,12 @@ export interface Database {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      // supabase/migrations/0004_transicoes_rpc.sql
+      registrar_transicao: {
+        Args: { p_pedido_id: string; p_para: StatusPedido; p_comentario?: string | null };
+        Returns: undefined;
+      };
+    };
   };
 }

@@ -139,7 +139,7 @@ export function valorPorExtenso(valorEmReais: number): string {
 }
 
 /** "R$ 34.152,36" — espaço normal (não o NBSP que Intl currency devolveria). */
-function formatarMoeda(valorEmReais: number): string {
+export function formatarMoeda(valorEmReais: number): string {
   const numero = new Intl.NumberFormat("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
