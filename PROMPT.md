@@ -127,7 +127,9 @@ Tabelas mínimas (ajuste tipos conforme necessário):
   valor_total, valor_licenca_adicional, valor_mensal_api, valor_mensal_software, primeiro_pagamento,
   dia_vencimento, convencao_parcelas: calendario|ciclo, vigencia_inicio, vigencia_fim,
   divulga_parceria: bool, multa_tipo, multa_texto, foro, condicao_especial, plano_legado_detectado,
-  plano_legado_nome_original, bling_pedido_id, criado_em, atualizado_em). `local` da assinatura NÃO é
+  plano_legado_nome_original, geracao_contrato_erro, bling_pedido_id, criado_em, atualizado_em).
+  `geracao_contrato_erro` guarda a mensagem de erro quando a geração automática falha (ver trava de
+  `APROVADO` na seção 4) — fica NULL no caminho feliz. `local` da assinatura NÃO é
   campo — é sempre fixo "Porto Alegre/RS" (sede da Footure), hardcoded no gerador.
 - **contratos** (id, pedido_id, versao, arquivo_path (Storage), gerado_em, gerado_por, motivo_versao,
   status_revisao). Cada edição do jurídico cria nova versão (não sobrescreve); `motivo_versao` guarda
