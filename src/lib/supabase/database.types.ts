@@ -1,0 +1,330 @@
+// Tipos escritos à mão a partir de supabase/migrations/0001_init.sql — não há
+// projeto Supabase conectado ainda para rodar `supabase gen types`. Quando
+// houver um projeto real, regenerar com:
+//   supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts
+// e conferir se nada divergiu do que está aqui.
+
+export type PapelUsuario = "vendedor" | "juridico" | "admin";
+export type TipoCliente = "clube" | "agente";
+export type StatusPedido =
+  | "rascunho"
+  | "em_aprovacao"
+  | "aprovado"
+  | "em_revisao_juridica"
+  | "pronto_para_assinatura"
+  | "enviado_para_assinatura"
+  | "assinado"
+  | "concluido";
+export type FormaPagamento = "avista" | "parcelado";
+export type ConvencaoParcelas = "calendario" | "ciclo";
+export type TipoSignatario = "representante_legal" | "testemunha";
+export type MultaTipo =
+  | "sem_multa"
+  | "duas_mensalidades"
+  | "tres_mensalidades"
+  | "retencao_total"
+  | "customizado";
+export type StatusRevisaoContrato = "pendente" | "aprovado";
+export type BaseCalculoComissao = "valor_total" | "valor_recebido";
+export type EscopoComissao = "global" | "por_vendedor" | "por_plano" | "por_pagamento";
+export type StatusComissao = "previsto" | "confirmado" | "pago";
+export type Produto = "footlink" | "api";
+
+// supabase-js exige Row/Insert/Update/Relationships em cada tabela, e
+// Tables/Views/Functions como irmãos no schema — sem isso a inferência de
+// tipos das queries (`.select("col")` etc.) cai silenciosamente para `never`.
+type TableDef<Row, Insert, Update> = {
+  Row: Row;
+  Insert: Insert;
+  Update: Update;
+  Relationships: [];
+};
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: TableDef<
+        { user_id: string; nome: string; papel: PapelUsuario; criado_em: string },
+        { user_id: string; nome: string; papel?: PapelUsuario },
+        { nome?: string; papel?: PapelUsuario }
+      >;
+      clientes: TableDef<
+        {
+          id: string;
+          tipo: TipoCliente;
+          razao_social: string;
+          cnpj: string;
+          endereco: string;
+          foro_preferencial: string;
+          criado_em: string;
+          atualizado_em: string;
+        },
+        {
+          id?: string;
+          tipo: TipoCliente;
+          razao_social: string;
+          cnpj: string;
+          endereco: string;
+          foro_preferencial?: string;
+        },
+        {
+          tipo?: TipoCliente;
+          razao_social?: string;
+          cnpj?: string;
+          endereco?: string;
+          foro_preferencial?: string;
+        }
+      >;
+      signatarios_cliente: TableDef<
+        {
+          id: string;
+          cliente_id: string;
+          tipo: TipoSignatario;
+          nome_completo: string;
+          email: string;
+          cpf: string;
+          criado_em: string;
+        },
+        {
+          id?: string;
+          cliente_id: string;
+          tipo: TipoSignatario;
+          nome_completo: string;
+          email: string;
+          cpf: string;
+        },
+        { tipo?: TipoSignatario; nome_completo?: string; email?: string; cpf?: string }
+      >;
+      representantes_footure: TableDef<
+        { id: string; nome: string; cargo: string; email: string | null; cpf: string | null; ativo: boolean },
+        { id?: string; nome: string; cargo: string; email?: string | null; cpf?: string | null; ativo?: boolean },
+        { nome?: string; cargo?: string; email?: string | null; cpf?: string | null; ativo?: boolean }
+      >;
+      pedidos: TableDef<
+        {
+          id: string;
+          cliente_id: string;
+          vendedor_id: string;
+          status: StatusPedido;
+          perfil: TipoCliente;
+          produtos: Produto[];
+          plano: string;
+          licencas_pagas: number;
+          licencas_gratuitas: number;
+          forma_pagamento: FormaPagamento;
+          valor_mensal: number;
+          valor_total: number;
+          valor_licenca_adicional: number | null;
+          valor_mensal_api: number | null;
+          valor_mensal_software: number | null;
+          primeiro_pagamento: string;
+          dia_vencimento: number | null;
+          convencao_parcelas: ConvencaoParcelas;
+          vigencia_inicio: string;
+          vigencia_fim: string;
+          divulga_parceria: boolean;
+          multa_tipo: MultaTipo;
+          multa_texto: string;
+          foro: string;
+          condicao_especial: string | null;
+          plano_legado_detectado: boolean;
+          plano_legado_nome_original: string | null;
+          geracao_contrato_erro: string | null;
+          bling_pedido_id: string | null;
+          criado_em: string;
+          atualizado_em: string;
+        },
+        {
+          id?: string;
+          cliente_id: string;
+          vendedor_id: string;
+          status?: StatusPedido;
+          perfil: TipoCliente;
+          produtos?: Produto[];
+          plano: string;
+          licencas_pagas?: number;
+          licencas_gratuitas?: number;
+          forma_pagamento: FormaPagamento;
+          valor_mensal: number;
+          valor_total: number;
+          valor_licenca_adicional?: number | null;
+          valor_mensal_api?: number | null;
+          valor_mensal_software?: number | null;
+          primeiro_pagamento: string;
+          dia_vencimento?: number | null;
+          convencao_parcelas?: ConvencaoParcelas;
+          vigencia_inicio: string;
+          vigencia_fim: string;
+          divulga_parceria?: boolean;
+          multa_tipo?: MultaTipo;
+          multa_texto: string;
+          foro?: string;
+          condicao_especial?: string | null;
+          plano_legado_detectado?: boolean;
+          plano_legado_nome_original?: string | null;
+          geracao_contrato_erro?: string | null;
+          bling_pedido_id?: string | null;
+        },
+        Partial<{
+          status: StatusPedido;
+          perfil: TipoCliente;
+          produtos: Produto[];
+          plano: string;
+          licencas_pagas: number;
+          licencas_gratuitas: number;
+          forma_pagamento: FormaPagamento;
+          valor_mensal: number;
+          valor_total: number;
+          valor_licenca_adicional: number | null;
+          valor_mensal_api: number | null;
+          valor_mensal_software: number | null;
+          primeiro_pagamento: string;
+          dia_vencimento: number | null;
+          convencao_parcelas: ConvencaoParcelas;
+          vigencia_inicio: string;
+          vigencia_fim: string;
+          divulga_parceria: boolean;
+          multa_tipo: MultaTipo;
+          multa_texto: string;
+          foro: string;
+          condicao_especial: string | null;
+          plano_legado_detectado: boolean;
+          plano_legado_nome_original: string | null;
+          geracao_contrato_erro: string | null;
+          bling_pedido_id: string | null;
+        }>
+      >;
+      pedido_signatarios: TableDef<
+        { id: string; pedido_id: string; signatario_cliente_id: string; tipo: TipoSignatario },
+        { id?: string; pedido_id: string; signatario_cliente_id: string; tipo: TipoSignatario },
+        never
+      >;
+      pedido_representantes_footure: TableDef<
+        { id: string; pedido_id: string; representante_footure_id: string },
+        { id?: string; pedido_id: string; representante_footure_id: string },
+        never
+      >;
+      pedido_testemunhas_footure: TableDef<
+        { id: string; pedido_id: string; nome_completo: string; email: string; cpf: string },
+        { id?: string; pedido_id: string; nome_completo: string; email: string; cpf: string },
+        never
+      >;
+      contratos: TableDef<
+        {
+          id: string;
+          pedido_id: string;
+          versao: number;
+          arquivo_path: string;
+          gerado_em: string;
+          gerado_por: string;
+          motivo_versao: string | null;
+          status_revisao: StatusRevisaoContrato;
+        },
+        {
+          id?: string;
+          pedido_id: string;
+          versao: number;
+          arquivo_path: string;
+          gerado_por: string;
+          motivo_versao?: string | null;
+          status_revisao?: StatusRevisaoContrato;
+        },
+        { status_revisao?: StatusRevisaoContrato }
+      >;
+      transicoes: TableDef<
+        {
+          id: string;
+          pedido_id: string;
+          de: StatusPedido | null;
+          para: StatusPedido;
+          ator_id: string;
+          comentario: string | null;
+          criado_em: string;
+        },
+        {
+          id?: string;
+          pedido_id: string;
+          de?: StatusPedido | null;
+          para: StatusPedido;
+          ator_id: string;
+          comentario?: string | null;
+        },
+        never
+      >;
+      regras_comissao: TableDef<
+        {
+          id: string;
+          ativo: boolean;
+          percentual: number;
+          base_calculo: BaseCalculoComissao;
+          escopo_tipo: EscopoComissao;
+          escopo_valor: string | null;
+          vigencia_inicio: string;
+          criado_em: string;
+        },
+        {
+          id?: string;
+          ativo?: boolean;
+          percentual: number;
+          base_calculo?: BaseCalculoComissao;
+          escopo_tipo?: EscopoComissao;
+          escopo_valor?: string | null;
+          vigencia_inicio?: string;
+        },
+        Partial<{
+          ativo: boolean;
+          percentual: number;
+          base_calculo: BaseCalculoComissao;
+          escopo_tipo: EscopoComissao;
+          escopo_valor: string | null;
+          vigencia_inicio: string;
+        }>
+      >;
+      comissoes: TableDef<
+        {
+          id: string;
+          pedido_id: string;
+          vendedor_id: string;
+          regra_id: string | null;
+          base: number;
+          percentual: number;
+          valor_calculado: number;
+          status: StatusComissao;
+          pago_em: string | null;
+          pago_observacao: string | null;
+          criado_em: string;
+        },
+        {
+          id?: string;
+          pedido_id: string;
+          vendedor_id: string;
+          regra_id?: string | null;
+          base: number;
+          percentual: number;
+          valor_calculado: number;
+          status?: StatusComissao;
+        },
+        Partial<{ status: StatusComissao; pago_em: string | null; pago_observacao: string | null }>
+      >;
+      integracoes_bling: TableDef<
+        {
+          id: string;
+          access_token: string | null;
+          refresh_token: string | null;
+          expires_at: string | null;
+          config: Record<string, unknown>;
+          atualizado_em: string;
+        },
+        { id?: string; access_token?: string | null; refresh_token?: string | null; expires_at?: string | null; config?: Record<string, unknown> },
+        Partial<{ access_token: string | null; refresh_token: string | null; expires_at: string | null; config: Record<string, unknown> }>
+      >;
+      integracoes_clicksign: TableDef<
+        { id: string; access_token: string | null; config: Record<string, unknown>; atualizado_em: string },
+        { id?: string; access_token?: string | null; config?: Record<string, unknown> },
+        Partial<{ access_token: string | null; config: Record<string, unknown> }>
+      >;
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+  };
+}

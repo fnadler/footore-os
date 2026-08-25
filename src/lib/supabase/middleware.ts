@@ -1,0 +1,68 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import type { Database } from "./database.types";
+
+const AREA_POR_PAPEL: Record<string, string> = {
+  vendedor: "/vendedor",
+  juridico: "/juridico",
+  admin: "/admin",
+};
+
+const ROTAS_PUBLICAS = ["/login"];
+
+// Chamado pelo src/proxy.ts em toda request. Faz duas coisas:
+// 1. Refresh de sessão (padrão @supabase/ssr) — checagem "otimista", sem
+//    consulta pesada além do necessário para validar o token.
+// 2. Redireciona quem não está logado para /login, e quem está logado na
+//    área errada (ex.: vendedor tentando abrir /admin) para a sua própria
+//    área — mas isso é só UX; a autorização de verdade (RLS + checagem
+//    dentro de cada Server Action) é a camada que realmente protege dados.
+export async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          for (const { name, value } of cookiesToSet) {
+            request.cookies.set(name, value);
+          }
+          response = NextResponse.next({ request });
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options);
+          }
+        },
+      },
+    },
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const rotaPublica = ROTAS_PUBLICAS.some((rota) => pathname.startsWith(rota));
+
+  if (!user && !rotaPublica) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  if (user && rotaPublica) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("papel")
+      .eq("user_id", user.id)
+      .single();
+
+    const url = request.nextUrl.clone();
+    url.pathname = profile ? AREA_POR_PAPEL[profile.papel] : "/vendedor";
+    return NextResponse.redirect(url);
+  }
+
+  return response;
+}
