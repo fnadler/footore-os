@@ -10,6 +10,8 @@
 // contrato real (só temos Pro assinado para agente), está marcado como
 // ASSUMIDO — revisar antes de gerar contrato de verdade nesses planos.
 
+import { inteiroPorExtenso } from "./valorPorExtenso";
+
 export type PlanoClube = "Starter" | "Basic" | "Essential" | "Elite" | "Multi-Club";
 export type PlanoAgente = "Single" | "Starter" | "Growth" | "Pro" | "Prime";
 
@@ -212,10 +214,36 @@ export const PRECO_LICENCA_ADICIONAL_REFERENCIA: Record<PlanoClube | PlanoAgente
   Prime: "R$ 750,00 / R$ 700,00 / R$ 650,00",
 };
 
+// "um"/"dois" -> "uma"/"duas" (licença é substantivo feminino). Confirmado
+// contra BRAGANTINO: "20 (vinte) licenças + 01 (uma) licença Feminino
+// gratuita" — nenhum dos 4 contratos-modelo tem gratuitas>1 pra conferir a
+// pluralização de "licença(s) {rótulo} gratuita(s)" nesse caso; ASSUMIDO.
+function extensoFeminino(n: number): string {
+  return inteiroPorExtenso(n).replace(/\bum\b/g, "uma").replace(/\bdois\b/g, "duas");
+}
+
+/**
+ * "03 (três)" (sem gratuitas) ou "20 (vinte) licenças + 01 (uma) licença
+ * Feminino gratuita" (com gratuitas) — confirmado contra GOIAS/ELENKO/
+ * CORINTHIANS (sem gratuitas) e BRAGANTINO (com). `rotuloGratuita` não tem
+ * campo próprio no modelo de dados hoje (PROMPT.md só tem
+ * `licencas_gratuitas` numérico) — default "Feminino" por ser o único caso
+ * real observado; revisar se aparecer outro tipo de licença gratuita.
+ */
+export function montarLinhaLicencas(pagas: number, gratuitas: number, rotuloGratuita = "Feminino"): string {
+  const pagasTexto = `${String(pagas).padStart(2, "0")} (${extensoFeminino(pagas)})`;
+  if (gratuitas === 0) return pagasTexto;
+  const gratuitasTexto = `${String(gratuitas).padStart(2, "0")} (${extensoFeminino(gratuitas)})`;
+  return `${pagasTexto} licenças + ${gratuitasTexto} licença ${rotuloGratuita} gratuita`;
+}
+
 export function montarFeatures(
   perfil: "clube" | "agente",
   plano: string,
   incluiApi: boolean,
+  licencasPagas: number,
+  licencasGratuitas: number,
+  rotuloGratuita?: string,
 ): Array<[string, string]> {
   const linhas = perfil === "clube" ? FEATURES_CLUBE : FEATURES_AGENTE;
   const planoValido = (perfil === "clube" ? PLANOS_CLUBE : PLANOS_AGENTE).includes(plano as never);
@@ -223,7 +251,9 @@ export function montarFeatures(
     throw new Error(`Plano "${plano}" inválido para perfil "${perfil}".`);
   }
 
-  const resultado: Array<[string, string]> = [];
+  const resultado: Array<[string, string]> = [
+    ["Licenças Contempladas no Plano", montarLinhaLicencas(licencasPagas, licencasGratuitas, rotuloGratuita)],
+  ];
   if (incluiApi) resultado.push([FEATURE_API.label, FEATURE_API.valor]);
   for (const linha of linhas) {
     resultado.push([linha.label, (linha.valores as Record<string, string>)[plano]]);

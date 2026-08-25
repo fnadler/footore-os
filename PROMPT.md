@@ -244,6 +244,15 @@ As cláusulas opcionais descritas em `references/clausulas.md` mas ausentes do `
 atual (compliance, não-vínculo, estatuto, DPA estendida tipo Corinthians cláusula 21ª) ficam **fora
 do escopo da Fase 1** — o script é portado como está para essas cláusulas.
 
+> **Atualização (execução da Fase 1 — achado do teste de fidelidade):** o Goiás real também tem uma
+> Cláusula Décima Terceira (confidencialidade) longa/negociada, com Parágrafos 1º-4º e 6º próprios,
+> diferente do texto padrão do `gerar_contrato.js`. Bragantino e Corinthians (também clube) confirmam
+> que a versão curta do script é o padrão majoritário — a variante do Goiás entra na mesma categoria
+> das cláusulas opcionais acima (fora de escopo, não replicada). Corrigido na mesma leva: o parágrafo
+> "obrigação financeira... forma integral" (Cláusula Sétima, parcelado sem API) era gerado só para
+> agente no script original — confirmado idêntico em Goiás (clube) e Elenko (agente), corrigido para
+> valer nos dois perfis. Ver `scripts/test-geracao.ts` para o detalhe de cada divergência aceita.
+
 O `.docx` é salvo no Supabase Storage; cria registro em `contratos` (versão 1); estado →
 `EM_REVISAO_JURIDICA`.
 
