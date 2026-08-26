@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
-import { AcoesPedido, acaoPendente } from "./acoes-pedido";
+import { AcoesPedido } from "./acoes-pedido";
+import { acaoPendente } from "@/lib/pedidos/acaoPendente";
 import type { PapelUsuario, StatusPedido } from "@/lib/supabase/database.types";
 
 // Só aparece quando o papel logado tem algo a fazer no status atual — o
