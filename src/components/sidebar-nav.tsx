@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import { ClipboardList, FileCheck2, CheckSquare, Users, Settings, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PapelUsuario } from "@/lib/supabase/database.types";
 
-export interface SidebarLink {
+interface SidebarLink {
   href: string;
   label: string;
   icon: LucideIcon;
@@ -13,15 +14,45 @@ export interface SidebarLink {
   exact?: boolean;
 }
 
-export interface SidebarGroup {
+interface SidebarGroup {
   label: string;
   links: SidebarLink[];
 }
 
+// Componentes de ícone (lucide-react) não são serializáveis pela fronteira
+// Server->Client — por isso essa config, com os ícones, mora dentro do
+// próprio client component em vez de vir como prop do AppShell (Server
+// Component). AppShell só passa o papel (string).
+const GRUPOS_POR_PAPEL: Record<PapelUsuario, SidebarGroup[]> = {
+  vendedor: [
+    {
+      label: "Vendas",
+      links: [{ href: "/vendedor", label: "Meus pedidos", icon: ClipboardList, exact: true }],
+    },
+  ],
+  juridico: [
+    {
+      label: "Jurídico",
+      links: [{ href: "/juridico", label: "Contratos para revisão", icon: FileCheck2, exact: true }],
+    },
+  ],
+  admin: [
+    {
+      label: "Administração",
+      links: [
+        { href: "/admin", label: "Aprovação", icon: CheckSquare, exact: true },
+        { href: "/admin/usuarios", label: "Usuários", icon: Users, exact: true },
+        { href: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: true },
+      ],
+    },
+  ],
+};
+
 // Porte de .ds-sidenav (design_system.html) — fundo roxo quase-preto,
 // indicador de item ativo com borda + fundo translúcido roxo.
-export function SidebarNav({ groups }: { groups: SidebarGroup[] }) {
+export function SidebarNav({ papel }: { papel: PapelUsuario }) {
   const pathname = usePathname();
+  const groups = GRUPOS_POR_PAPEL[papel];
 
   return (
     <aside className="fixed inset-y-0 left-0 flex w-[230px] shrink-0 flex-col overflow-y-auto border-r border-white/6 bg-[#09001a]">
