@@ -6,65 +6,87 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Supa = SupabaseClient<Database>;
 
+// Erros de consulta (relacionamento não encontrado, RLS negando, etc.) não
+// devem virar "lista vazia"/"não encontrado" silencioso — isso já custou um
+// bug real (FK faltando pro embed de profiles) que parecia rota quebrada.
+function logSeErro(contexto: string, error: { message: string } | null) {
+  if (error) console.error(`[consultas] ${contexto}:`, error.message);
+}
+
 export async function listarPedidosDoVendedor(supabase: Supa, vendedorId: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("pedidos")
     .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social)")
     .eq("vendedor_id", vendedorId)
     .order("criado_em", { ascending: false });
+  logSeErro("listarPedidosDoVendedor", error);
   return data ?? [];
 }
 
 export async function listarFilaAprovacao(supabase: Supa) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("pedidos")
     .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social), profiles(nome)")
     .eq("status", "em_aprovacao")
     .order("criado_em", { ascending: true });
+  logSeErro("listarFilaAprovacao", error);
   return data ?? [];
 }
 
 export async function listarPedidosAprovadosComErro(supabase: Supa) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("pedidos")
     .select("id, plano, clientes(razao_social), geracao_contrato_erro")
     .eq("status", "aprovado")
     .not("geracao_contrato_erro", "is", null);
+  logSeErro("listarPedidosAprovadosComErro", error);
   return data ?? [];
 }
 
 export async function listarFilaJuridico(supabase: Supa) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("pedidos")
     .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social)")
     .in("status", ["em_revisao_juridica", "pronto_para_assinatura", "enviado_para_assinatura"])
     .order("criado_em", { ascending: true });
+  logSeErro("listarFilaJuridico", error);
   return data ?? [];
 }
 
 export async function buscarPedidoDetalhe(supabase: Supa, pedidoId: string) {
-  const { data: pedido } = await supabase
+  const { data: pedido, error: erroPedido } = await supabase
     .from("pedidos")
     .select("*, clientes(*), profiles(nome)")
     .eq("id", pedidoId)
     .single();
+  logSeErro(`buscarPedidoDetalhe(${pedidoId})`, erroPedido);
   if (!pedido) return null;
 
-  const [{ data: transicoes }, { data: contratos }, { data: signatarios }, { data: repsFooture }, { data: testFooture }] =
-    await Promise.all([
-      supabase
-        .from("transicoes")
-        .select("id, de, para, comentario, criado_em, profiles(nome)")
-        .eq("pedido_id", pedidoId)
-        .order("criado_em", { ascending: true }),
-      supabase.from("contratos").select("*").eq("pedido_id", pedidoId).order("versao", { ascending: false }),
-      supabase
-        .from("pedido_signatarios")
-        .select("tipo, signatarios_cliente(id, nome_completo, email, cpf)")
-        .eq("pedido_id", pedidoId),
-      supabase.from("pedido_representantes_footure").select("representantes_footure(id, nome)").eq("pedido_id", pedidoId),
-      supabase.from("pedido_testemunhas_footure").select("*").eq("pedido_id", pedidoId),
-    ]);
+  const [
+    { data: transicoes, error: erroTransicoes },
+    { data: contratos, error: erroContratos },
+    { data: signatarios, error: erroSignatarios },
+    { data: repsFooture, error: erroReps },
+    { data: testFooture, error: erroTest },
+  ] = await Promise.all([
+    supabase
+      .from("transicoes")
+      .select("id, de, para, comentario, criado_em, profiles(nome)")
+      .eq("pedido_id", pedidoId)
+      .order("criado_em", { ascending: true }),
+    supabase.from("contratos").select("*").eq("pedido_id", pedidoId).order("versao", { ascending: false }),
+    supabase
+      .from("pedido_signatarios")
+      .select("tipo, signatarios_cliente(id, nome_completo, email, cpf)")
+      .eq("pedido_id", pedidoId),
+    supabase.from("pedido_representantes_footure").select("representantes_footure(id, nome)").eq("pedido_id", pedidoId),
+    supabase.from("pedido_testemunhas_footure").select("*").eq("pedido_id", pedidoId),
+  ]);
+  logSeErro("buscarPedidoDetalhe:transicoes", erroTransicoes);
+  logSeErro("buscarPedidoDetalhe:contratos", erroContratos);
+  logSeErro("buscarPedidoDetalhe:signatarios", erroSignatarios);
+  logSeErro("buscarPedidoDetalhe:representantesFooture", erroReps);
+  logSeErro("buscarPedidoDetalhe:testemunhasFooture", erroTest);
 
   return {
     pedido,
@@ -77,25 +99,29 @@ export async function buscarPedidoDetalhe(supabase: Supa, pedidoId: string) {
 }
 
 export async function listarClientes(supabase: Supa) {
-  const { data } = await supabase.from("clientes").select("*").order("razao_social", { ascending: true });
+  const { data, error } = await supabase.from("clientes").select("*").order("razao_social", { ascending: true });
+  logSeErro("listarClientes", error);
   return data ?? [];
 }
 
 export async function listarSignatariosDoCliente(supabase: Supa, clienteId: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("signatarios_cliente")
     .select("*")
     .eq("cliente_id", clienteId)
     .order("criado_em", { ascending: false });
+  logSeErro("listarSignatariosDoCliente", error);
   return data ?? [];
 }
 
 export async function listarRepresentantesFooture(supabase: Supa) {
-  const { data } = await supabase.from("representantes_footure").select("*").eq("ativo", true).order("nome");
+  const { data, error } = await supabase.from("representantes_footure").select("*").eq("ativo", true).order("nome");
+  logSeErro("listarRepresentantesFooture", error);
   return data ?? [];
 }
 
 export async function listarUsuarios(supabase: Supa) {
-  const { data } = await supabase.from("profiles").select("*").order("nome");
+  const { data, error } = await supabase.from("profiles").select("*").order("nome");
+  logSeErro("listarUsuarios", error);
   return data ?? [];
 }

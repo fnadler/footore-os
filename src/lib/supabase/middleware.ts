@@ -20,9 +20,26 @@ const ROTAS_PUBLICAS = ["/login"];
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  const { pathname } = request.nextUrl;
+  const rotaPublica = ROTAS_PUBLICAS.some((rota) => pathname.startsWith(rota));
+
+  // Sem projeto Supabase conectado (.env.local ausente/incompleto): não dá
+  // pra checar sessão de verdade. Em vez de deixar createServerClient
+  // lançar e derrubar a request com 500, trata como "ninguém logado" — só
+  // /login (e as demais rotas públicas) renderiza; o resto redireciona pra
+  // lá, igual ao caso normal de usuário deslogado.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (!rotaPublica) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
+
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
@@ -42,9 +59,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-  const rotaPublica = ROTAS_PUBLICAS.some((rota) => pathname.startsWith(rota));
 
   if (!user && !rotaPublica) {
     const url = request.nextUrl.clone();
