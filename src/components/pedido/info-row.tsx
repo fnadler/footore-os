@@ -20,7 +20,7 @@ export function InfoRow({ label, value, longo = false }: { label: string; value:
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border py-3 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={cn("text-sm font-bold text-foreground", "text-right")}>{value}</span>
+      <span className={cn("text-sm font-semibold text-foreground", "text-right")}>{value}</span>
     </div>
   );
 }
