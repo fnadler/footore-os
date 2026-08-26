@@ -30,11 +30,43 @@ export interface RepresentanteFoutureOption {
   nome: string;
 }
 
+export interface DadosIniciaisPedido {
+  clienteId: string;
+  nomePlanoImportado?: string;
+  plano: string;
+  planoLegadoNomeOriginal?: string | null;
+  planoLegadoConfirmado?: boolean;
+  incluiApi: boolean;
+  licencasPagas: number;
+  licencasGratuitas: number;
+  formaPagamento: "avista" | "parcelado";
+  valorMensal: number;
+  valorTotal: number;
+  valorLicencaAdicional: number;
+  valorMensalApi: number;
+  valorMensalSoftware: number;
+  primeiroPagamento: string;
+  diaVencimento: number;
+  convencaoParcelas: "calendario" | "ciclo";
+  vigenciaInicio: string;
+  vigenciaFim: string;
+  divulgaParceria: boolean;
+  multaTipo: MultaTipo;
+  multaTexto: string;
+  foro: string;
+  condicaoEspecial: string;
+  representantesLegais: SignatarioForm[];
+  testemunhasCliente: SignatarioForm[];
+  representantesFootureIds: string[];
+  testemunhasFooture: SignatarioForm[];
+}
+
 interface Props {
   clientes: ClienteOption[];
   signatariosPorCliente: Record<string, SignatarioForm[]>;
   representantesFooture: RepresentanteFoutureOption[];
   pedidoId?: string;
+  dadosIniciais?: DadosIniciaisPedido;
 }
 
 function somarMeses(dataISO: string, meses: number): string {
@@ -46,45 +78,45 @@ function somarMeses(dataISO: string, meses: number): string {
 
 const ESTADO_INICIAL: SalvarPedidoState = {};
 
-export function PedidoForm({ clientes, signatariosPorCliente, representantesFooture, pedidoId }: Props) {
+export function PedidoForm({ clientes, signatariosPorCliente, representantesFooture, pedidoId, dadosIniciais: d }: Props) {
   const [estado, formAction, pendente] = useActionState(salvarPedido, ESTADO_INICIAL);
 
-  const [clienteId, setClienteId] = useState<string>("");
-  const [cadastrandoNovo, setCadastrandoNovo] = useState(clientes.length === 0);
+  const [clienteId, setClienteId] = useState<string>(d?.clienteId ?? "");
+  const [cadastrandoNovo, setCadastrandoNovo] = useState(!d && clientes.length === 0);
   const [novoCliente, setNovoCliente] = useState({ tipo: "clube" as "clube" | "agente", razaoSocial: "", cnpj: "", endereco: "" });
 
   const clienteSelecionado = clientes.find((c) => c.id === clienteId);
   const perfil: "clube" | "agente" = cadastrandoNovo ? novoCliente.tipo : (clienteSelecionado?.tipo ?? "clube");
 
-  const [nomePlanoImportado, setNomePlanoImportado] = useState("");
-  const [plano, setPlano] = useState("");
-  const [planoLegadoConfirmado, setPlanoLegadoConfirmado] = useState(false);
+  const [nomePlanoImportado, setNomePlanoImportado] = useState(d?.nomePlanoImportado ?? "");
+  const [plano, setPlano] = useState(d?.plano ?? "");
+  const [planoLegadoConfirmado, setPlanoLegadoConfirmado] = useState(d?.planoLegadoConfirmado ?? false);
   const legadoDetectado = useMemo(() => detectarPlanoLegado(perfil, nomePlanoImportado), [perfil, nomePlanoImportado]);
 
-  const [incluiApi, setIncluiApi] = useState(false);
-  const [licencasPagas, setLicencasPagas] = useState(1);
-  const [licencasGratuitas, setLicencasGratuitas] = useState(0);
-  const [formaPagamento, setFormaPagamento] = useState<"avista" | "parcelado">("parcelado");
-  const [valorMensal, setValorMensal] = useState(0);
-  const [valorTotal, setValorTotal] = useState(0);
-  const [valorLicencaAdicional, setValorLicencaAdicional] = useState(0);
-  const [valorMensalApi, setValorMensalApi] = useState(0);
-  const [valorMensalSoftware, setValorMensalSoftware] = useState(0);
-  const [primeiroPagamento, setPrimeiroPagamento] = useState("");
-  const [diaVencimento, setDiaVencimento] = useState(10);
-  const [convencaoParcelas, setConvencaoParcelas] = useState<"calendario" | "ciclo">("calendario");
-  const [vigenciaInicio, setVigenciaInicio] = useState("");
-  const [vigenciaFim, setVigenciaFim] = useState("");
-  const [divulgaParceria, setDivulgaParceria] = useState(false);
-  const [multaTipo, setMultaTipo] = useState<MultaTipo>("tres_mensalidades");
-  const [multaTexto, setMultaTexto] = useState(textoMultaDefault("tres_mensalidades"));
-  const [foro, setForo] = useState(FORO_DEFAULT);
-  const [condicaoEspecial, setCondicaoEspecial] = useState("");
+  const [incluiApi, setIncluiApi] = useState(d?.incluiApi ?? false);
+  const [licencasPagas, setLicencasPagas] = useState(d?.licencasPagas ?? 1);
+  const [licencasGratuitas, setLicencasGratuitas] = useState(d?.licencasGratuitas ?? 0);
+  const [formaPagamento, setFormaPagamento] = useState<"avista" | "parcelado">(d?.formaPagamento ?? "parcelado");
+  const [valorMensal, setValorMensal] = useState(d?.valorMensal ?? 0);
+  const [valorTotal, setValorTotal] = useState(d?.valorTotal ?? 0);
+  const [valorLicencaAdicional, setValorLicencaAdicional] = useState(d?.valorLicencaAdicional ?? 0);
+  const [valorMensalApi, setValorMensalApi] = useState(d?.valorMensalApi ?? 0);
+  const [valorMensalSoftware, setValorMensalSoftware] = useState(d?.valorMensalSoftware ?? 0);
+  const [primeiroPagamento, setPrimeiroPagamento] = useState(d?.primeiroPagamento ?? "");
+  const [diaVencimento, setDiaVencimento] = useState(d?.diaVencimento ?? 10);
+  const [convencaoParcelas, setConvencaoParcelas] = useState<"calendario" | "ciclo">(d?.convencaoParcelas ?? "calendario");
+  const [vigenciaInicio, setVigenciaInicio] = useState(d?.vigenciaInicio ?? "");
+  const [vigenciaFim, setVigenciaFim] = useState(d?.vigenciaFim ?? "");
+  const [divulgaParceria, setDivulgaParceria] = useState(d?.divulgaParceria ?? false);
+  const [multaTipo, setMultaTipo] = useState<MultaTipo>(d?.multaTipo ?? "tres_mensalidades");
+  const [multaTexto, setMultaTexto] = useState(d?.multaTexto ?? textoMultaDefault("tres_mensalidades"));
+  const [foro, setForo] = useState(d?.foro ?? FORO_DEFAULT);
+  const [condicaoEspecial, setCondicaoEspecial] = useState(d?.condicaoEspecial ?? "");
 
-  const [representantesLegais, setRepresentantesLegais] = useState<SignatarioForm[]>([]);
-  const [testemunhasCliente, setTestemunhasCliente] = useState<SignatarioForm[]>([]);
-  const [representantesFootureIds, setRepresentantesFootureIds] = useState<string[]>([]);
-  const [testemunhasFooture, setTestemunhasFooture] = useState<SignatarioForm[]>([]);
+  const [representantesLegais, setRepresentantesLegais] = useState<SignatarioForm[]>(d?.representantesLegais ?? []);
+  const [testemunhasCliente, setTestemunhasCliente] = useState<SignatarioForm[]>(d?.testemunhasCliente ?? []);
+  const [representantesFootureIds, setRepresentantesFootureIds] = useState<string[]>(d?.representantesFootureIds ?? []);
+  const [testemunhasFooture, setTestemunhasFooture] = useState<SignatarioForm[]>(d?.testemunhasFooture ?? []);
 
   const alertas = useMemo(
     () =>
