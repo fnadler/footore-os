@@ -79,6 +79,38 @@ function ComComentario({
   );
 }
 
+export interface AcaoPendente {
+  titulo: string;
+  descricao: string;
+}
+
+/**
+ * Espelha as condições de AcoesPedido — usado pela ProximaAcao pra decidir
+ * se mostra o painel de destaque (e com qual texto) sem duplicar a lógica
+ * de quais botões aparecem.
+ */
+export function acaoPendente(status: StatusPedido, papel: PapelUsuario, donoDoRascunho: boolean): AcaoPendente | null {
+  if (status === "rascunho" && donoDoRascunho) {
+    return { titulo: "Pedido em rascunho", descricao: "Revise os dados e envie para aprovação quando estiver pronto." };
+  }
+  if (status === "em_aprovacao" && papel === "admin") {
+    return { titulo: "Aguardando sua aprovação", descricao: "Confira os dados e os alertas abaixo antes de aprovar ou reprovar." };
+  }
+  if (status === "aprovado" && (papel === "admin" || papel === "juridico")) {
+    return { titulo: "Geração do contrato falhou", descricao: "A última tentativa não gerou o contrato — corrija o problema e tente novamente." };
+  }
+  if (status === "em_revisao_juridica" && (papel === "juridico" || papel === "admin")) {
+    return {
+      titulo: "Contrato em revisão",
+      descricao: "Baixe, ajuste se precisar e suba uma nova versão, ou libere para assinatura quando estiver pronto.",
+    };
+  }
+  if (status === "pronto_para_assinatura" && (papel === "juridico" || papel === "admin")) {
+    return { titulo: "Pronto para assinatura", descricao: "Dispare o envio para assinatura quando quiser seguir com o fluxo." };
+  }
+  return null;
+}
+
 export function AcoesPedido({
   pedidoId,
   status,

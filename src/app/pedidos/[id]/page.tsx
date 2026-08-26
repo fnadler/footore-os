@@ -1,14 +1,16 @@
 import { notFound } from "next/navigation";
+import { Building2, Package, Users, FileStack, History } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe } from "@/lib/pedidos/consultas";
 import { gerarAlertas } from "@/lib/validacoes/pedido";
 import { detectarPlanoLegado } from "@/lib/contratos/legado";
 import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RotuloStatus } from "@/components/rotulo-status";
+import { RotuloStatus, ROTULO_STATUS } from "@/components/rotulo-status";
 import { PainelAlertas } from "@/components/pedido/painel-alertas";
-import { AcoesPedido } from "@/components/pedido/acoes-pedido";
+import { StepperPedido } from "@/components/pedido/stepper-pedido";
+import { ProximaAcao } from "@/components/pedido/proxima-acao";
+import { BlocoFormulario } from "@/components/pedido/bloco-formulario";
 import { UploadNovaVersao } from "@/components/pedido/upload-nova-versao";
 
 function formatarMoeda(v: number | null) {
@@ -39,6 +41,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
 
   const representantesLegais = signatarios.filter((s) => s.tipo === "representante_legal");
   const testemunhasCliente = signatarios.filter((s) => s.tipo === "testemunha");
+  const donoDoRascunho = pedido.vendedor_id === sessao.id;
 
   const legado = detectarPlanoLegado(pedido.perfil, pedido.plano_legado_nome_original ?? "");
   const alertas = gerarAlertas({
@@ -65,13 +68,19 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">{cliente?.razao_social ?? "Pedido"}</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold text-foreground">{cliente?.razao_social ?? "Pedido"}</h1>
+          <p className="text-sm text-muted-foreground capitalize">
             {pedido.perfil} · {pedido.plano} · vendedor: {vendedorNome ?? "—"}
           </p>
         </div>
         <RotuloStatus status={pedido.status} />
       </div>
+
+      <div className="rounded-xl border border-border bg-card p-5">
+        <StepperPedido status={pedido.status} />
+      </div>
+
+      <ProximaAcao pedidoId={pedido.id} status={pedido.status} papel={sessao.papel} donoDoRascunho={donoDoRascunho} />
 
       <PainelAlertas alertas={alertas} />
       {pedido.geracao_contrato_erro && (
@@ -80,18 +89,13 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
         </p>
       )}
 
-      <AcoesPedido pedidoId={pedido.id} status={pedido.status} papel={sessao.papel} donoDoRascunho={pedido.vendedor_id === sessao.id} />
-
       {pedido.status === "em_revisao_juridica" && (sessao.papel === "juridico" || sessao.papel === "admin") && (
         <UploadNovaVersao pedidoId={pedido.id} />
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cliente</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1 text-sm">
+        <BlocoFormulario numero={1} titulo="Cliente" icon={Building2}>
+          <div className="flex flex-col gap-1 text-sm">
             <p>
               <strong>Razão social:</strong> {cliente?.razao_social}
             </p>
@@ -101,14 +105,11 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
             <p>
               <strong>Endereço:</strong> {cliente?.endereco}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </BlocoFormulario>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Produto e valores</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1 text-sm">
+        <BlocoFormulario numero={2} titulo="Produto e valores" icon={Package}>
+          <div className="flex flex-col gap-1 text-sm">
             <p>
               <strong>Produtos:</strong> {pedido.produtos.includes("api") ? "Footlink + API" : "Footlink"}
             </p>
@@ -146,14 +147,11 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
                 <strong>Condição especial:</strong> {pedido.condicao_especial}
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </BlocoFormulario>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Signatários</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
+        <BlocoFormulario numero={3} titulo="Signatários" icon={Users}>
+          <div className="flex flex-col gap-3 text-sm">
             <div>
               <p className="font-medium">Representantes legais do cliente</p>
               {representantesLegais.length === 0 && <p className="text-muted-foreground">Nenhum cadastrado.</p>}
@@ -188,17 +186,14 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
                 <p key={t.id}>{t.nome_completo}</p>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </BlocoFormulario>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Versões do contrato</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm">
+        <BlocoFormulario numero={4} titulo="Versões do contrato" icon={FileStack}>
+          <div className="flex flex-col gap-2 text-sm">
             {contratosComUrl.length === 0 && <p className="text-muted-foreground">Nenhum contrato gerado ainda.</p>}
             {contratosComUrl.map((c) => (
-              <div key={c.id} className="flex items-center justify-between border-b pb-2 last:border-0">
+              <div key={c.id} className="flex items-center justify-between border-b border-border pb-2 last:border-0">
                 <div>
                   <p>
                     Versão {c.versao} · {formatarData(c.gerado_em)}
@@ -212,27 +207,24 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </BlocoFormulario>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Linha do tempo</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2 text-sm">
+      <BlocoFormulario numero={5} titulo="Linha do tempo" icon={History}>
+        <div className="flex flex-col gap-2 text-sm">
           {transicoes.length === 0 && <p className="text-muted-foreground">Sem transições ainda.</p>}
           {transicoes.map((t) => (
-            <div key={t.id} className="border-b pb-2 last:border-0">
+            <div key={t.id} className="border-b border-border pb-2 last:border-0">
               <p>
-                <strong>{t.de ?? "criado"}</strong> → <strong>{t.para}</strong> · {(t.profiles as unknown as { nome: string } | null)?.nome} ·{" "}
-                {formatarData(t.criado_em)}
+                <strong>{t.de ? ROTULO_STATUS[t.de] : "criado"}</strong> → <strong>{ROTULO_STATUS[t.para]}</strong> ·{" "}
+                {(t.profiles as unknown as { nome: string } | null)?.nome} · {formatarData(t.criado_em)}
               </p>
               {t.comentario && <p className="text-muted-foreground">{t.comentario}</p>}
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </BlocoFormulario>
     </div>
   );
 }
