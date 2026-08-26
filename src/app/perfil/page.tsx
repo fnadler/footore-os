@@ -1,5 +1,6 @@
 import { exigirPapel } from "@/lib/auth/session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoRow } from "@/components/pedido/info-row";
 
 const ROTULO_PAPEL: Record<string, string> = {
   vendedor: "Vendedor",
@@ -18,19 +19,10 @@ export default async function PerfilPage() {
         <CardHeader>
           <CardTitle>Dados da conta</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 text-sm">
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Nome</p>
-            <p className="mt-1 text-foreground">{sessao.nome}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">E-mail</p>
-            <p className="mt-1 text-foreground">{sessao.email ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Papel</p>
-            <p className="mt-1 text-foreground">{ROTULO_PAPEL[sessao.papel] ?? sessao.papel}</p>
-          </div>
+        <CardContent className="flex flex-col">
+          <InfoRow label="Nome" value={sessao.nome} />
+          <InfoRow label="E-mail" value={sessao.email ?? "—"} />
+          <InfoRow label="Papel" value={ROTULO_PAPEL[sessao.papel] ?? sessao.papel} />
         </CardContent>
       </Card>
     </div>

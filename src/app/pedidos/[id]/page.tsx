@@ -11,6 +11,7 @@ import { PainelAlertas } from "@/components/pedido/painel-alertas";
 import { StepperPedido } from "@/components/pedido/stepper-pedido";
 import { ProximaAcao } from "@/components/pedido/proxima-acao";
 import { BlocoFormulario } from "@/components/pedido/bloco-formulario";
+import { InfoRow } from "@/components/pedido/info-row";
 import { UploadNovaVersao } from "@/components/pedido/upload-nova-versao";
 
 function formatarMoeda(v: number | null) {
@@ -95,58 +96,36 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BlocoFormulario numero={1} titulo="Cliente" icon={Building2}>
-          <div className="flex flex-col gap-1 text-sm">
-            <p>
-              <strong>Razão social:</strong> {cliente?.razao_social}
-            </p>
-            <p>
-              <strong>CNPJ:</strong> {cliente?.cnpj}
-            </p>
-            <p>
-              <strong>Endereço:</strong> {cliente?.endereco}
-            </p>
+          <div className="flex flex-col">
+            <InfoRow label="Razão social" value={cliente?.razao_social} />
+            <InfoRow label="CNPJ" value={cliente?.cnpj} />
+            <InfoRow label="Endereço" value={cliente?.endereco} longo />
           </div>
         </BlocoFormulario>
 
         <BlocoFormulario numero={2} titulo="Produto e valores" icon={Package}>
-          <div className="flex flex-col gap-1 text-sm">
-            <p>
-              <strong>Produtos:</strong> {pedido.produtos.includes("api") ? "Footlink + API" : "Footlink"}
-            </p>
-            <p>
-              <strong>Licenças:</strong> {pedido.licencas_pagas} pagas
-              {pedido.licencas_gratuitas > 0 ? ` + ${pedido.licencas_gratuitas} gratuita(s)` : ""}
-            </p>
-            <p>
-              <strong>Forma de pagamento:</strong>{" "}
-              {pedido.forma_pagamento === "avista" ? "À vista" : `Parcelado (${pedido.numero_parcelas}x)`} ·{" "}
-              {ROTULO_MEIO_PAGAMENTO[pedido.meio_pagamento]}
-            </p>
-            <p>
-              <strong>Valor da parcela:</strong> {formatarMoeda(pedido.valor_mensal)}
-            </p>
-            <p>
-              <strong>Valor total:</strong> {formatarMoeda(pedido.valor_total)}
-            </p>
+          <div className="flex flex-col">
+            <InfoRow label="Produtos" value={pedido.produtos.includes("api") ? "Footlink + API" : "Footlink"} />
+            <InfoRow
+              label="Licenças"
+              value={`${pedido.licencas_pagas} pagas${pedido.licencas_gratuitas > 0 ? ` + ${pedido.licencas_gratuitas} gratuita(s)` : ""}`}
+            />
+            <InfoRow
+              label="Forma de pagamento"
+              value={`${pedido.forma_pagamento === "avista" ? "À vista" : `Parcelado (${pedido.numero_parcelas}x)`} · ${ROTULO_MEIO_PAGAMENTO[pedido.meio_pagamento]}`}
+            />
+            <InfoRow label="Valor da parcela" value={formatarMoeda(pedido.valor_mensal)} />
+            <InfoRow label="Valor total" value={formatarMoeda(pedido.valor_total)} />
             {pedido.produtos.includes("api") && (
-              <p>
-                <strong>API / Software:</strong> {formatarMoeda(pedido.valor_mensal_api)} / {formatarMoeda(pedido.valor_mensal_software)}
-              </p>
+              <InfoRow
+                label="API / Software"
+                value={`${formatarMoeda(pedido.valor_mensal_api)} / ${formatarMoeda(pedido.valor_mensal_software)}`}
+              />
             )}
-            <p>
-              <strong>Vigência:</strong> {pedido.vigencia_inicio} a {pedido.vigencia_fim}
-            </p>
-            <p>
-              <strong>Foro:</strong> {pedido.foro}
-            </p>
-            <p>
-              <strong>Multa:</strong> {pedido.multa_texto}
-            </p>
-            {pedido.condicao_especial && (
-              <p>
-                <strong>Condição especial:</strong> {pedido.condicao_especial}
-              </p>
-            )}
+            <InfoRow label="Vigência" value={`${pedido.vigencia_inicio} a ${pedido.vigencia_fim}`} />
+            <InfoRow label="Foro" value={pedido.foro} />
+            <InfoRow label="Multa" value={pedido.multa_texto} longo />
+            {pedido.condicao_especial && <InfoRow label="Condição especial" value={pedido.condicao_especial} longo />}
           </div>
         </BlocoFormulario>
 
