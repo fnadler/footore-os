@@ -118,6 +118,11 @@ export function inteiroPorExtenso(valor: number): string {
   return resultado;
 }
 
+/** "12 (doze)" — padrão usado no contrato pra número de parcelas/meses. */
+export function numeroComExtenso(n: number): string {
+  return `${n} (${inteiroPorExtenso(n)})`;
+}
+
 // "de" obrigatório entre milhão(ões)/bilhão(ões) e o substantivo seguinte
 // quando a escala de milhão/bilhão é a última palavra antes dele (ex.: "um
 // milhão de reais", mas "um milhão e duzentos mil reais" sem "de").

@@ -34,6 +34,8 @@ const PedidoPayloadSchema = z.object({
   licencasPagas: z.number().int().min(0),
   licencasGratuitas: z.number().int().min(0),
   formaPagamento: z.enum(["avista", "parcelado"]),
+  meioPagamento: z.enum(["boleto", "pix", "transferencia_bancaria", "cartao_credito", "cartao_debito"]).default("boleto"),
+  numeroParcelas: z.number().int().min(1).optional(),
   valorMensal: z.number().nonnegative(),
   valorTotal: z.number().nonnegative(),
   valorLicencaAdicional: z.number().nonnegative().optional(),
@@ -96,6 +98,9 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
     clienteId = cliente.id;
   }
   if (!clienteId) return { erro: "Selecione um cliente existente ou cadastre um novo." };
+  if (payload.formaPagamento === "parcelado" && !payload.numeroParcelas) {
+    return { erro: "Informe o número de parcelas para pagamento parcelado." };
+  }
 
   const linhaPedido = {
     cliente_id: clienteId,
@@ -106,6 +111,8 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
     licencas_pagas: payload.licencasPagas,
     licencas_gratuitas: payload.licencasGratuitas,
     forma_pagamento: payload.formaPagamento,
+    meio_pagamento: payload.meioPagamento,
+    numero_parcelas: payload.formaPagamento === "parcelado" ? payload.numeroParcelas : null,
     valor_mensal: payload.valorMensal,
     valor_total: payload.valorTotal,
     valor_licenca_adicional: payload.valorLicencaAdicional ?? null,

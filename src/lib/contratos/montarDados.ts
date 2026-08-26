@@ -60,7 +60,7 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
 
   const parcelas =
     pedido.forma_pagamento === "parcelado"
-      ? gerarParcelas(formatarDDMMAAAA(pedido.primeiro_pagamento), 12, pedido.convencao_parcelas)
+      ? gerarParcelas(formatarDDMMAAAA(pedido.primeiro_pagamento), pedido.numero_parcelas ?? 12, pedido.convencao_parcelas)
       : [];
 
   return {
@@ -82,6 +82,7 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
       pedido.valor_mensal_software != null ? valorFormatadoComExtenso(pedido.valor_mensal_software) : undefined,
     licAdicional: pedido.valor_licenca_adicional != null ? formatarMoeda(pedido.valor_licenca_adicional) : "a combinar",
     diaVenc: pedido.dia_vencimento != null ? String(pedido.dia_vencimento) : undefined,
+    numeroParcelas: pedido.numero_parcelas ?? undefined,
     primeiroVenc: formatarDDMMAAAA(pedido.primeiro_pagamento),
     vencAvista: undefined,
     vigIni: formatarDDMMAAAA(pedido.vigencia_inicio),

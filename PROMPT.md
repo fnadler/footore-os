@@ -128,7 +128,9 @@ Tabelas mínimas (ajuste tipos conforme necessário):
   Footure são específicas de cada pedido (N por pedido), não um cadastro reutilizável como as do
   cliente.
 - **pedidos** (id, cliente_id, vendedor_id, status, perfil, produtos[] {footlink, api},
-  plano, licencas_pagas, licencas_gratuitas, forma_pagamento: avista|parcelado, valor_mensal,
+  plano, licencas_pagas, licencas_gratuitas, forma_pagamento: avista|parcelado,
+  meio_pagamento: boleto|pix|transferencia_bancaria|cartao_credito|cartao_debito (dado interno, não
+  afeta o texto do contrato), numero_parcelas (obrigatório se parcelado, null se à vista), valor_mensal,
   valor_total, valor_licenca_adicional, valor_mensal_api, valor_mensal_software, primeiro_pagamento,
   dia_vencimento, convencao_parcelas: calendario|ciclo, vigencia_inicio, vigencia_fim,
   divulga_parceria: bool, multa_tipo, multa_texto, foro, condicao_especial, plano_legado_detectado,
@@ -180,9 +182,20 @@ client + server:
   plano novo correspondente (Brasil→Starter, Latam→Pro, Global→Prime) e **exige confirmação** antes
   de prosseguir. O contrato sempre usa o nome novo. Growth e Single não têm equivalente legado.
 - **Licenças:** pagas (número) + gratuitas (número, ex.: Feminino).
-- **Forma de pagamento:** à vista | parcelado (12x).
-- **Valores:** valor mensal, valor total, valor de licença adicional. Se API: valor mensal da API +
-  valor mensal do software.
+- **Forma de pagamento:** à vista | parcelado. Se parcelado, **número de parcelas** é campo do
+  pedido (era fixo em 12 — agora variável; o texto da Cláusula Sétima/Oitava usa o valor real, ex.
+  "em 6 (seis) parcelas mensais"). Continua sem contrato-modelo com número diferente de 12 pra
+  conferir, mas é só o numeral mudando no mesmo padrão de frase, não cláusula nova.
+- **Meio de pagamento:** Boleto | PIX | Transferência bancária | Cartão de crédito | Cartão de
+  débito. **Dado interno/CRM — não muda o texto do contrato.** A Cláusula Oitava sempre diz "boleto
+  bancário", igual aos 4 contratos-modelo (nenhum deles usa outro meio); decisão explícita para não
+  inventar cláusula sem precedente real. Revisar se algum dia precisar variar o texto por meio.
+- **Valores:** valor da parcela (era rotulado "valor mensal"), valor total, valor de licença
+  adicional. Se parcelado, valor total é sugerido automaticamente como
+  `valor da parcela × número de parcelas` — continua editável (mesmo padrão de sugestão/override já
+  usado em vigência), porque negociações com desconto/condição especial ainda podem divergir do
+  cálculo puro (ver alerta de coerência, seção 6.2 item 4). Se API: valor mensal da API + valor
+  mensal do software.
 - **Datas:** primeiro pagamento, dia de vencimento recorrente, convenção de parcelas
   (calendário | ciclo — default calendário).
 - **Multa de rescisão:** parâmetro negociável. Opções: sem multa | 2 mensalidades | 3 mensalidades

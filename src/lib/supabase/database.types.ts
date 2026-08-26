@@ -17,6 +17,7 @@ export type StatusPedido =
   | "concluido";
 export type FormaPagamento = "avista" | "parcelado";
 export type ConvencaoParcelas = "calendario" | "ciclo";
+export type MeioPagamento = "boleto" | "pix" | "transferencia_bancaria" | "cartao_credito" | "cartao_debito";
 export type TipoSignatario = "representante_legal" | "testemunha";
 export type MultaTipo =
   | "sem_multa"
@@ -112,6 +113,8 @@ export interface Database {
           licencas_pagas: number;
           licencas_gratuitas: number;
           forma_pagamento: FormaPagamento;
+          meio_pagamento: MeioPagamento;
+          numero_parcelas: number | null;
           valor_mensal: number;
           valor_total: number;
           valor_licenca_adicional: number | null;
@@ -145,6 +148,8 @@ export interface Database {
           licencas_pagas?: number;
           licencas_gratuitas?: number;
           forma_pagamento: FormaPagamento;
+          meio_pagamento?: MeioPagamento;
+          numero_parcelas?: number | null;
           valor_mensal: number;
           valor_total: number;
           valor_licenca_adicional?: number | null;
@@ -175,6 +180,8 @@ export interface Database {
           licencas_pagas: number;
           licencas_gratuitas: number;
           forma_pagamento: FormaPagamento;
+          meio_pagamento: MeioPagamento;
+          numero_parcelas: number | null;
           valor_mensal: number;
           valor_total: number;
           valor_licenca_adicional: number | null;

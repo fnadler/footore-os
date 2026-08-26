@@ -24,6 +24,7 @@ export interface DadosParaAlertas {
   valorMensal: number;
   valorTotal: number;
   formaPagamento: "avista" | "parcelado";
+  numeroParcelas?: number;
   licencasGratuitas: number;
   foro: string;
   temRepresentanteLegal: boolean;
@@ -62,12 +63,13 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
   }
 
   if (dados.formaPagamento === "parcelado") {
-    const esperado = dados.valorMensal * 12;
+    const numeroParcelas = dados.numeroParcelas ?? 12;
+    const esperado = dados.valorMensal * numeroParcelas;
     const divergeu = Math.abs(esperado - dados.valorTotal) > 0.01;
     if (divergeu) {
       alertas.push({
         codigo: "valor_incoerente",
-        mensagem: `Valor mensal × 12 (${esperado.toFixed(2)}) não bate com o valor total (${dados.valorTotal.toFixed(2)}). Pode ser desconto, licença grátis ou condição especial — confirme antes de aprovar; o sistema não recalcula sozinho.`,
+        mensagem: `Valor da parcela × ${numeroParcelas} (${esperado.toFixed(2)}) não bate com o valor total (${dados.valorTotal.toFixed(2)}). Pode ser desconto, licença grátis ou condição especial — confirme antes de aprovar; o sistema não recalcula sozinho.`,
       });
     }
   }

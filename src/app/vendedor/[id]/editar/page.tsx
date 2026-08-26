@@ -37,6 +37,8 @@ export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/
     licencasPagas: pedido.licencas_pagas,
     licencasGratuitas: pedido.licencas_gratuitas,
     formaPagamento: pedido.forma_pagamento,
+    meioPagamento: pedido.meio_pagamento,
+    numeroParcelas: pedido.numero_parcelas ?? 12,
     valorMensal: pedido.valor_mensal,
     valorTotal: pedido.valor_total,
     valorLicencaAdicional: pedido.valor_licenca_adicional ?? 0,

@@ -4,6 +4,7 @@ import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe } from "@/lib/pedidos/consultas";
 import { gerarAlertas } from "@/lib/validacoes/pedido";
 import { detectarPlanoLegado } from "@/lib/contratos/legado";
+import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RotuloStatus } from "@/components/rotulo-status";
 import { PainelAlertas } from "@/components/pedido/painel-alertas";
@@ -44,6 +45,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
     valorMensal: pedido.valor_mensal,
     valorTotal: pedido.valor_total,
     formaPagamento: pedido.forma_pagamento,
+    numeroParcelas: pedido.numero_parcelas ?? undefined,
     licencasGratuitas: pedido.licencas_gratuitas,
     foro: pedido.foro,
     temRepresentanteLegal: representantesLegais.length > 0,
@@ -115,10 +117,12 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
               {pedido.licencas_gratuitas > 0 ? ` + ${pedido.licencas_gratuitas} gratuita(s)` : ""}
             </p>
             <p>
-              <strong>Forma de pagamento:</strong> {pedido.forma_pagamento === "avista" ? "À vista" : "Parcelado (12x)"}
+              <strong>Forma de pagamento:</strong>{" "}
+              {pedido.forma_pagamento === "avista" ? "À vista" : `Parcelado (${pedido.numero_parcelas}x)`} ·{" "}
+              {ROTULO_MEIO_PAGAMENTO[pedido.meio_pagamento]}
             </p>
             <p>
-              <strong>Valor mensal:</strong> {formatarMoeda(pedido.valor_mensal)}
+              <strong>Valor da parcela:</strong> {formatarMoeda(pedido.valor_mensal)}
             </p>
             <p>
               <strong>Valor total:</strong> {formatarMoeda(pedido.valor_total)}

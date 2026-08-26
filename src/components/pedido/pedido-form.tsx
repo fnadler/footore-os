@@ -16,7 +16,8 @@ import { gerarAlertas, FORO_DEFAULT } from "@/lib/validacoes/pedido";
 import { detectarPlanoLegado } from "@/lib/contratos/legado";
 import { PLANOS_CLUBE, PLANOS_AGENTE } from "@/lib/contratos/planos";
 import { ROTULO_MULTA, textoMultaDefault } from "@/lib/contratos/multa";
-import type { MultaTipo } from "@/lib/supabase/database.types";
+import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
+import type { MultaTipo, MeioPagamento } from "@/lib/supabase/database.types";
 
 export interface ClienteOption {
   id: string;
@@ -40,6 +41,8 @@ export interface DadosIniciaisPedido {
   licencasPagas: number;
   licencasGratuitas: number;
   formaPagamento: "avista" | "parcelado";
+  meioPagamento: MeioPagamento;
+  numeroParcelas: number;
   valorMensal: number;
   valorTotal: number;
   valorLicencaAdicional: number;
@@ -97,8 +100,27 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
   const [licencasPagas, setLicencasPagas] = useState(d?.licencasPagas ?? 1);
   const [licencasGratuitas, setLicencasGratuitas] = useState(d?.licencasGratuitas ?? 0);
   const [formaPagamento, setFormaPagamento] = useState<"avista" | "parcelado">(d?.formaPagamento ?? "parcelado");
-  const [valorMensal, setValorMensal] = useState(d?.valorMensal ?? 0);
+  const [meioPagamento, setMeioPagamento] = useState<MeioPagamento>(d?.meioPagamento ?? "boleto");
+  const [numeroParcelas, setNumeroParcelas] = useState(d?.numeroParcelas ?? 12);
+  const [valorMensal, setValorMensalRaw] = useState(d?.valorMensal ?? 0);
   const [valorTotal, setValorTotal] = useState(d?.valorTotal ?? 0);
+  const [valorTotalEditadoManualmente, setValorTotalEditadoManualmente] = useState(!!d);
+
+  // Valor total é sugerido a partir de parcela × nº de parcelas (parcelado),
+  // mas continua editável — negociações com desconto/condição especial
+  // ainda precisam poder divergir do cálculo puro (ver alerta de coerência).
+  function setValorMensal(v: number) {
+    setValorMensalRaw(v);
+    if (formaPagamento === "parcelado" && !valorTotalEditadoManualmente) {
+      setValorTotal(Number((v * numeroParcelas).toFixed(2)));
+    }
+  }
+  function aoMudarNumeroParcelas(n: number) {
+    setNumeroParcelas(n);
+    if (formaPagamento === "parcelado" && !valorTotalEditadoManualmente) {
+      setValorTotal(Number((valorMensal * n).toFixed(2)));
+    }
+  }
   const [valorLicencaAdicional, setValorLicencaAdicional] = useState(d?.valorLicencaAdicional ?? 0);
   const [valorMensalApi, setValorMensalApi] = useState(d?.valorMensalApi ?? 0);
   const [valorMensalSoftware, setValorMensalSoftware] = useState(d?.valorMensalSoftware ?? 0);
@@ -124,6 +146,7 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
         valorMensal,
         valorTotal,
         formaPagamento,
+        numeroParcelas,
         licencasGratuitas,
         foro,
         temRepresentanteLegal: representantesLegais.length > 0,
@@ -131,7 +154,17 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
         planoLegadoNomeOriginal: legadoDetectado?.nomeOriginal,
         planoLegadoConfirmado,
       }),
-    [valorMensal, valorTotal, formaPagamento, licencasGratuitas, foro, representantesLegais, legadoDetectado, planoLegadoConfirmado],
+    [
+      valorMensal,
+      valorTotal,
+      formaPagamento,
+      numeroParcelas,
+      licencasGratuitas,
+      foro,
+      representantesLegais,
+      legadoDetectado,
+      planoLegadoConfirmado,
+    ],
   );
 
   const planosDisponiveis = perfil === "clube" ? PLANOS_CLUBE : PLANOS_AGENTE;
@@ -150,6 +183,8 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
       licencasPagas,
       licencasGratuitas,
       formaPagamento,
+      meioPagamento,
+      numeroParcelas: formaPagamento === "parcelado" ? numeroParcelas : undefined,
       valorMensal,
       valorTotal,
       valorLicencaAdicional: valorLicencaAdicional || undefined,
@@ -313,17 +348,34 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           <CardTitle>Pagamento e valores</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label>Forma de pagamento</Label>
-            <Select value={formaPagamento} onValueChange={(v) => setFormaPagamento(v as "avista" | "parcelado")}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="parcelado">Parcelado (12x)</SelectItem>
-                <SelectItem value="avista">À vista</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label>Forma de pagamento</Label>
+              <Select value={formaPagamento} onValueChange={(v) => setFormaPagamento(v as "avista" | "parcelado")}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="parcelado">Parcelado</SelectItem>
+                  <SelectItem value="avista">À vista</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Meio de pagamento</Label>
+              <Select value={meioPagamento} onValueChange={(v) => v && setMeioPagamento(v as MeioPagamento)}>
+                <SelectTrigger className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ROTULO_MEIO_PAGAMENTO).map(([valor, rotulo]) => (
+                    <SelectItem key={valor} value={valor}>
+                      {rotulo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {incluiApi && (
@@ -361,13 +413,34 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           )}
 
           <div className="grid grid-cols-2 gap-4">
+            {formaPagamento === "parcelado" && (
+              <div className="flex flex-col gap-2">
+                <Label>Número de parcelas</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={numeroParcelas}
+                  onChange={(e) => aoMudarNumeroParcelas(Number(e.target.value))}
+                />
+              </div>
+            )}
             <div className="flex flex-col gap-2">
-              <Label>Valor mensal</Label>
+              <Label>Valor da parcela</Label>
               <Input type="number" step="0.01" value={valorMensal} onChange={(e) => setValorMensal(Number(e.target.value))} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Valor total</Label>
-              <Input type="number" step="0.01" value={valorTotal} onChange={(e) => setValorTotal(Number(e.target.value))} />
+              <Label>
+                Valor total{formaPagamento === "parcelado" ? " (parcela × número de parcelas, editável)" : ""}
+              </Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={valorTotal}
+                onChange={(e) => {
+                  setValorTotal(Number(e.target.value));
+                  setValorTotalEditadoManualmente(true);
+                }}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Valor da licença adicional</Label>

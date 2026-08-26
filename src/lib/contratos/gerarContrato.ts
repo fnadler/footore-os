@@ -35,6 +35,7 @@ import {
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import type { Parcela } from "./parcelas";
+import { numeroComExtenso } from "./valorPorExtenso";
 
 export interface Signatario {
   nomeCompleto: string;
@@ -62,6 +63,8 @@ export interface DadosContrato {
   diaVenc?: string;
   primeiroVenc?: string;
   vencAvista?: string;
+  /** Só relevante quando pagamento === "parcelado" — era fixo em 12. */
+  numeroParcelas?: number;
   vigIni: string;
   vigFim: string;
   divulga: boolean;
@@ -596,12 +599,15 @@ export function gerarContrato(D: DadosContrato): Document {
 
   // Valor (Sétima) + Pagamento (Oitava)
   if (D.pagamento === "parcelado") {
+    // Era fixo em "12 (doze)" no script original — agora vem do pedido
+    // (D.numeroParcelas), com 12 como default de compatibilidade.
+    const parcelasExtenso = numeroComExtenso(D.numeroParcelas ?? 12);
     if (D.api && D.mensalApi && D.mensalSoftware) {
       k.push(
         P([
           B("CLÁUSULA SÉTIMA: "),
           R(
-            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, em 12 (doze) parcelas mensais de ${D.mensal}, sendo cada parcela composta por: (i) ${D.mensalApi} referentes à utilização da API; e (ii) ${D.mensalSoftware} referentes à licença de uso do software FOOTLINK.`,
+            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, em ${parcelasExtenso} parcelas mensais de ${D.mensal}, sendo cada parcela composta por: (i) ${D.mensalApi} referentes à utilização da API; e (ii) ${D.mensalSoftware} referentes à licença de uso do software FOOTLINK.`,
           ),
         ]),
       );
@@ -618,7 +624,7 @@ export function gerarContrato(D: DadosContrato): Document {
         P([
           B("CLÁUSULA SÉTIMA: "),
           R(
-            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, parcelados em 12 pagamentos fixos de ${D.mensal} ao mês a título de Licença de Uso do software FOOTLINK.`,
+            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, parcelados em ${parcelasExtenso} pagamentos fixos de ${D.mensal} ao mês a título de Licença de Uso do software FOOTLINK.`,
           ),
         ]),
       );
