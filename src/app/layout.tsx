@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Barlow } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-// DESIGN-airbnb.md roda em Airbnb Cereal VF (proprietária) com Circular como
-// fallback; Inter é o substituto open-source que o próprio guia recomenda
-// (ver seção "Note on Font Substitutes").
-const inter = Inter({
-  variable: "--font-inter",
+// Design system real do Footlink (design_system.html) roda em Barlow.
+const barlow = Barlow({
+  variable: "--font-barlow",
+  weight: ["400", "500", "600", "700", "800"],
   subsets: ["latin"],
 });
 
@@ -18,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${barlow.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster />

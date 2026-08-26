@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* DESIGN-airbnb.md roda em Airbnb Cereal VF/Circular; Inter é o
-     substituto open-source recomendado pelo próprio guia. */
-  --font-sans: var(--font-inter), "Circular", -apple-system, system-ui, Roboto, "Helvetica Neue", sans-serif;
+  /* Footlink roda em Barlow (design_system.html, mirror do _variables.scss
+     real do produto) — substitui o Inter usado antes. */
+  --font-sans: var(--font-barlow), -apple-system, system-ui, Roboto, "Helvetica Neue", sans-serif;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -40,91 +40,89 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* DESIGN-airbnb.md `rounded` scale (xs 4 · sm 8 · md 14 · lg 20 · xl 32 ·
-     full 9999) mapeada nos nomes de classe Tailwind que os componentes já
-     usam — não é a mesma escala de nomes do guia, é o valor em px que cada
-     rounded-* precisa ter pra bater com o componente Airbnb equivalente
-     (rounded-lg = botões/inputs, rounded-xl = cards/dialogs/dropdowns). */
+  /* design_system.html: botões/inputs 8px, cards/tabelas/modais 12px,
+     badges/tags 20px (raio fixo, não pill proporcional — é assim que o
+     produto real faz .category_badge/.ds-tag). */
   --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-md: 6px;
   --radius-lg: 8px;
-  --radius-xl: 14px;
+  --radius-xl: 12px;
   --radius-2xl: 20px;
-  --radius-3xl: 26px;
+  --radius-3xl: 9999px;
   --radius-4xl: 9999px;
 }
 
 :root {
-  /* Tokens do DESIGN-airbnb.md (`colors`) — canvas/ink/rausch etc. */
-  --background: #ffffff; /* colors.canvas */
-  --foreground: #222222; /* colors.ink */
-  --card: #ffffff; /* colors.surface-card */
-  --card-foreground: #222222;
+  /* Tokens do design_system.html real do Footlink (mirror de _variables.scss) */
+  --background: #f5f5f5; /* --light */
+  --foreground: #000000; /* --black */
+  --card: #ffffff; /* --white */
+  --card-foreground: #000000;
   --popover: #ffffff;
-  --popover-foreground: #222222;
-  --primary: #ff385c; /* colors.primary — Rausch */
-  --primary-foreground: #ffffff; /* colors.on-primary */
-  --secondary: #f2f2f2; /* colors.surface-strong */
-  --secondary-foreground: #222222;
-  --muted: #f7f7f7; /* colors.surface-soft */
-  --muted-foreground: #6a6a6a; /* colors.muted */
-  --accent: #f2f2f2; /* colors.surface-strong */
-  --accent-foreground: #222222;
-  --destructive: #c13515; /* colors.primary-error-text */
-  --border: #dddddd; /* colors.hairline */
-  --input: #dddddd; /* colors.hairline */
-  --ring: #222222; /* colors.ink — sem "glow" colorido, halo neutro no foco */
+  --popover-foreground: #000000;
+  --primary: #5a00ff; /* --lightPurple1 — ação primária */
+  --primary-foreground: #ffffff;
+  --secondary: #f2f2f2; /* --lightGrey2 */
+  --secondary-foreground: #000000;
+  --muted: #f5f5f5; /* --light */
+  --muted-foreground: #62747c; /* --gray */
+  --accent: #f9f9f9; /* --surface-hover */
+  --accent-foreground: #000000;
+  --destructive: #eb5757; /* --red */
+  --border: #e0e0e0; /* --gray5 */
+  --input: #e0e0e0;
+  --ring: #5a00ff;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.5rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #f5f5f5;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #5a00ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2f2f2;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #e0e0e0;
+  --sidebar-ring: #5a00ff;
 }
 
 .dark {
-  /* Airbnb não documenta dark mode (colors.canvas é sempre branco no
-     produto real) — variante adaptada mantendo o Rausch como único accent,
-     como pede o guia, mas em base neutra escura. */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #ff385c;
+  /* design_system.html implementa dark mode reatribuindo os MESMOS tokens
+     (--white vira a superfície escura, --light vira o fundo de página,
+     --black vira branco) em vez de uma paleta paralela — replicado aqui. */
+  --background: #151521; /* --light (dark) */
+  --foreground: #ffffff; /* --black (dark) */
+  --card: #1e1e2d; /* --white (dark) */
+  --card-foreground: #ffffff;
+  --popover: #1e1e2d;
+  --popover-foreground: #ffffff;
+  --primary: #5a00ff; /* inalterado — primária continua primária no escuro */
   --primary-foreground: #ffffff;
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: #ff6a4d;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.708 0 0);
+  --secondary: #252536; /* --lightGrey2 (dark) */
+  --secondary-foreground: #ffffff;
+  --muted: #151521;
+  --muted-foreground: #9899ad; /* --gray (dark) */
+  --accent: #212130; /* --surface-hover (dark) */
+  --accent-foreground: #ffffff;
+  --destructive: #eb5757;
+  --border: #2b2b40; /* --gray5 (dark) */
+  --input: #2b2b40;
+  --ring: #5a00ff;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #151521;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #5a00ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #252536;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2b2b40;
+  --sidebar-ring: #5a00ff;
 }
 
 @layer base {

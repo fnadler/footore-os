@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [estado, formAction, pendente] = useActionState(entrar, ESTADO_INICIAL);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 p-4 dark:bg-black">
+    <div className="flex flex-1 items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Footlink — Fechamento de Venda</CardTitle>

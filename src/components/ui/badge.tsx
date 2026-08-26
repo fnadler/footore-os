@@ -19,6 +19,13 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // Pílulas de status do design_system.html real (Ativo/Pendente/
+        // Novo/Encerrado) — cores literais, não fazem parte da paleta
+        // semântica principal do app.
+        success: "bg-[#bde6ce] text-[#219653]",
+        warning: "bg-[#fbe0c9] text-[#ce9232]",
+        info: "bg-[#29b6f6]/15 text-[#0f8fce]",
+        neutral: "border-[#bdbdbd] bg-[#e0e0e0] text-[#6a6a6a]",
       },
     },
     defaultVariants: {
