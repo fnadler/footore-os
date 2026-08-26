@@ -1,54 +1,47 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { ClipboardList, FileCheck2, CheckSquare, Users, Settings } from "lucide-react";
 import type { SessaoUsuario } from "@/lib/auth/session";
-import { sair } from "@/lib/auth/actions";
+import { SidebarNav, type SidebarGroup } from "@/components/sidebar-nav";
+import { UserMenu } from "@/components/user-menu";
 
-const LINKS_POR_PAPEL: Record<SessaoUsuario["papel"], { href: string; label: string }[]> = {
-  vendedor: [{ href: "/vendedor", label: "Meus pedidos" }],
-  juridico: [{ href: "/juridico", label: "Contratos para revisão" }],
+const GRUPOS_POR_PAPEL: Record<SessaoUsuario["papel"], SidebarGroup[]> = {
+  vendedor: [
+    {
+      label: "Vendas",
+      links: [{ href: "/vendedor", label: "Meus pedidos", icon: ClipboardList, exact: true }],
+    },
+  ],
+  juridico: [
+    {
+      label: "Jurídico",
+      links: [{ href: "/juridico", label: "Contratos para revisão", icon: FileCheck2, exact: true }],
+    },
+  ],
   admin: [
-    { href: "/admin", label: "Aprovação" },
-    { href: "/admin/usuarios", label: "Usuários" },
-    { href: "/admin/configuracoes", label: "Configurações" },
+    {
+      label: "Administração",
+      links: [
+        { href: "/admin", label: "Aprovação", icon: CheckSquare, exact: true },
+        { href: "/admin/usuarios", label: "Usuários", icon: Users, exact: true },
+        { href: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: true },
+      ],
+    },
   ],
 };
 
-// AppBar roxo sólido, 60px — porte de .ds-appbar-mock (design_system.html),
-// a navbar real do produto Footlink.
+// Layout com nav lateral fixa (porte de .ds-sidenav) + barra superior só com
+// identidade do usuário — pensado pra crescer com mais seções/grupos na
+// lateral conforme a plataforma ganha funcionalidades.
 export function AppShell({ sessao, children }: { sessao: SessaoUsuario; children: ReactNode }) {
   return (
-    <div className="flex min-h-full flex-col bg-background">
-      <header className="h-[60px] shrink-0 bg-primary">
-        <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-4 px-6">
-          <div className="flex items-center gap-7">
-            <Link href="/" className="flex shrink-0 items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, sem otimização necessária */}
-              <img src="/logo.svg" alt="Footlink" height={30} className="h-[30px] w-auto" />
-            </Link>
-            <nav className="flex items-center gap-5 text-sm font-medium">
-              {LINKS_POR_PAPEL[sessao.papel].map((link) => (
-                <Link key={link.href} href={link.href} className="text-white/80 transition-colors hover:text-white">
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-white/70">
-              {sessao.nome} · <span className="capitalize">{sessao.papel}</span>
-            </span>
-            <form action={sair}>
-              <button
-                type="submit"
-                className="h-9 rounded-lg px-3 text-sm font-semibold text-white transition-colors hover:bg-white/12"
-              >
-                Sair
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
+    <div className="min-h-full bg-background">
+      <SidebarNav groups={GRUPOS_POR_PAPEL[sessao.papel]} />
+      <div className="flex min-h-full flex-col pl-[230px]">
+        <header className="flex h-16 shrink-0 items-center justify-end border-b border-border bg-card px-8">
+          <UserMenu sessao={sessao} />
+        </header>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-8 py-8">{children}</main>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,16 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { Building2, Package, CreditCard, CalendarRange, ScrollText, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { BlocoFormulario } from "./bloco-formulario";
+import { ResumoPedido } from "./resumo-pedido";
 import { SignatarioListEditor, type SignatarioForm } from "./signatario-list-editor";
 import { PainelAlertas } from "./painel-alertas";
 import { salvarPedido, type SalvarPedidoState } from "@/lib/pedidos/serverActions";
@@ -209,18 +211,17 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
     return formAction(formData);
   }
 
-  return (
-    <form action={aoEnviar} className="flex flex-col gap-6 pb-16">
-      <PainelAlertas alertas={alertas} />
-      {estado.erro && (
-        <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{estado.erro}</p>
-      )}
+  const clienteNome = cadastrandoNovo ? novoCliente.razaoSocial : (clienteSelecionado?.razaoSocial ?? "");
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cliente</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+  return (
+    <form action={aoEnviar} className="grid grid-cols-1 items-start gap-6 pb-16 lg:grid-cols-[1fr_320px] lg:gap-8">
+      <div className="flex flex-col gap-6">
+        <PainelAlertas alertas={alertas} />
+        {estado.erro && (
+          <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{estado.erro}</p>
+        )}
+
+        <BlocoFormulario numero={1} titulo="Cliente" descricao="Quem está contratando o Footlink." icon={Building2}>
           {!cadastrandoNovo ? (
             <div className="flex flex-col gap-2">
               <Label>Cliente existente</Label>
@@ -273,14 +274,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </BlocoFormulario>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Produto e plano</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <BlocoFormulario numero={2} titulo="Produto e plano" descricao="O que foi vendido e em qual escala." icon={Package}>
           <div className="flex items-center gap-2">
             <Checkbox checked disabled />
             <Label>Assinatura Footlink (sempre incluída)</Label>
@@ -340,14 +336,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <Input type="number" min={0} value={licencasGratuitas} onChange={(e) => setLicencasGratuitas(Number(e.target.value))} />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </BlocoFormulario>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Pagamento e valores</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <BlocoFormulario numero={3} titulo="Pagamento" descricao="Como e quando o cliente paga." icon={CreditCard}>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label>Forma de pagamento</Label>
@@ -479,7 +470,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               </>
             )}
           </div>
+        </BlocoFormulario>
 
+        <BlocoFormulario numero={4} titulo="Vigência" descricao="Início e fim do contrato." icon={CalendarRange}>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label>Vigência — início</Label>
@@ -499,14 +492,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <Input type="date" value={vigenciaFim} onChange={(e) => setVigenciaFim(e.target.value)} />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </BlocoFormulario>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cláusulas negociáveis</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <BlocoFormulario numero={5} titulo="Cláusulas negociáveis" descricao="Multa, divulgação, foro e condições especiais." icon={ScrollText}>
           <div className="flex flex-col gap-2">
             <Label>Multa de rescisão</Label>
             <Select
@@ -545,14 +533,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
             <Label>Condição especial</Label>
             <Textarea value={condicaoEspecial} onChange={(e) => setCondicaoEspecial(e.target.value)} rows={2} />
           </div>
-        </CardContent>
-      </Card>
+        </BlocoFormulario>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Signatários</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <BlocoFormulario numero={6} titulo="Signatários" descricao="Quem assina pelo cliente e pela Footure." icon={Users}>
           <SignatarioListEditor
             titulo="Representantes legais do cliente"
             itens={representantesLegais}
@@ -584,14 +567,17 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           </div>
 
           <SignatarioListEditor titulo="Testemunhas da Footure" itens={testemunhasFooture} onChange={setTestemunhasFooture} />
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={pendente}>
-          {pendente ? "Salvando…" : "Salvar rascunho"}
-        </Button>
+        </BlocoFormulario>
       </div>
+
+      <ResumoPedido
+        clienteNome={clienteNome}
+        perfil={perfil}
+        plano={plano}
+        valorTotal={valorTotal}
+        qtdAlertas={alertas.length}
+        pendente={pendente}
+      />
     </form>
   );
 }
