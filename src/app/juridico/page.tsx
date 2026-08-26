@@ -42,7 +42,7 @@ export default async function JuridicoPage() {
                   <RotuloStatus status={p.status} />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button size="sm" render={<Link href={`/pedidos/${p.id}`}>Abrir</Link>} />
+                  <Button size="sm" nativeButton={false} render={<Link href={`/pedidos/${p.id}`}>Abrir</Link>} />
                 </TableCell>
               </TableRow>
             ))}

@@ -28,7 +28,7 @@ export default async function AdminAprovacaoPage() {
               </AlertTitle>
               <AlertDescription className="flex items-center justify-between gap-4">
                 <span>{p.geracao_contrato_erro}</span>
-                <Button size="sm" render={<Link href={`/pedidos/${p.id}`}>Ver e tentar novamente</Link>} />
+                <Button size="sm" nativeButton={false} render={<Link href={`/pedidos/${p.id}`}>Ver e tentar novamente</Link>} />
               </AlertDescription>
             </Alert>
           ))}
@@ -58,7 +58,7 @@ export default async function AdminAprovacaoPage() {
                 </TableCell>
                 <TableCell>{formatarMoeda(p.valor_total)}</TableCell>
                 <TableCell className="text-right">
-                  <Button size="sm" render={<Link href={`/pedidos/${p.id}`}>Revisar</Link>} />
+                  <Button size="sm" nativeButton={false} render={<Link href={`/pedidos/${p.id}`}>Revisar</Link>} />
                 </TableCell>
               </TableRow>
             ))}

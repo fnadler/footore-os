@@ -16,7 +16,7 @@ export default async function VendedorPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Meus pedidos</h1>
-        <Button render={<Link href="/vendedor/novo">Novo pedido</Link>} />
+        <Button nativeButton={false} render={<Link href="/vendedor/novo">Novo pedido</Link>} />
       </div>
 
       {pedidos.length === 0 ? (
@@ -50,6 +50,7 @@ export default async function VendedorPage() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    nativeButton={false}
                     render={
                       <Link href={p.status === "rascunho" ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
                         {p.status === "rascunho" ? "Editar" : "Ver"}
