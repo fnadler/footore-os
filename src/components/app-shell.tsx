@@ -21,8 +21,9 @@ export function AppShell({ sessao, children }: { sessao: SessaoUsuario; children
       <header className="h-[60px] shrink-0 bg-primary">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-4 px-6">
           <div className="flex items-center gap-7">
-            <Link href="/" className="text-base font-bold text-white">
-              Footlink
+            <Link href="/" className="flex shrink-0 items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático, sem otimização necessária */}
+              <img src="/logo.svg" alt="Footlink" height={30} className="h-[30px] w-auto" />
             </Link>
             <nav className="flex items-center gap-5 text-sm font-medium">
               {LINKS_POR_PAPEL[sessao.papel].map((link) => (
