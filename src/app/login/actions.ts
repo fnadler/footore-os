@@ -25,9 +25,3 @@ export async function entrar(_prev: LoginState, formData: FormData): Promise<Log
   // Redireciona para "/", que decide a área por papel (ver src/app/page.tsx).
   redirect("/");
 }
-
-export async function sair() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}

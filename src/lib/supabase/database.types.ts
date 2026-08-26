@@ -166,6 +166,8 @@ export interface Database {
           bling_pedido_id?: string | null;
         },
         Partial<{
+          cliente_id: string;
+          vendedor_id: string;
           status: StatusPedido;
           perfil: TipoCliente;
           produtos: Produto[];

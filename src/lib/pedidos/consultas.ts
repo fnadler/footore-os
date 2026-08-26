@@ -1,0 +1,101 @@
+// Consultas de leitura reaproveitadas pelas telas — cada uma já reflete a
+// visibilidade da RLS (o `supabase` passado é sempre o client autenticado da
+// request, nunca service role).
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
+
+type Supa = SupabaseClient<Database>;
+
+export async function listarPedidosDoVendedor(supabase: Supa, vendedorId: string) {
+  const { data } = await supabase
+    .from("pedidos")
+    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social)")
+    .eq("vendedor_id", vendedorId)
+    .order("criado_em", { ascending: false });
+  return data ?? [];
+}
+
+export async function listarFilaAprovacao(supabase: Supa) {
+  const { data } = await supabase
+    .from("pedidos")
+    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social), profiles(nome)")
+    .eq("status", "em_aprovacao")
+    .order("criado_em", { ascending: true });
+  return data ?? [];
+}
+
+export async function listarPedidosAprovadosComErro(supabase: Supa) {
+  const { data } = await supabase
+    .from("pedidos")
+    .select("id, plano, clientes(razao_social), geracao_contrato_erro")
+    .eq("status", "aprovado")
+    .not("geracao_contrato_erro", "is", null);
+  return data ?? [];
+}
+
+export async function listarFilaJuridico(supabase: Supa) {
+  const { data } = await supabase
+    .from("pedidos")
+    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social)")
+    .in("status", ["em_revisao_juridica", "pronto_para_assinatura", "enviado_para_assinatura"])
+    .order("criado_em", { ascending: true });
+  return data ?? [];
+}
+
+export async function buscarPedidoDetalhe(supabase: Supa, pedidoId: string) {
+  const { data: pedido } = await supabase
+    .from("pedidos")
+    .select("*, clientes(*), profiles(nome)")
+    .eq("id", pedidoId)
+    .single();
+  if (!pedido) return null;
+
+  const [{ data: transicoes }, { data: contratos }, { data: signatarios }, { data: repsFooture }, { data: testFooture }] =
+    await Promise.all([
+      supabase
+        .from("transicoes")
+        .select("id, de, para, comentario, criado_em, profiles(nome)")
+        .eq("pedido_id", pedidoId)
+        .order("criado_em", { ascending: true }),
+      supabase.from("contratos").select("*").eq("pedido_id", pedidoId).order("versao", { ascending: false }),
+      supabase
+        .from("pedido_signatarios")
+        .select("tipo, signatarios_cliente(id, nome_completo, email, cpf)")
+        .eq("pedido_id", pedidoId),
+      supabase.from("pedido_representantes_footure").select("representantes_footure(id, nome)").eq("pedido_id", pedidoId),
+      supabase.from("pedido_testemunhas_footure").select("*").eq("pedido_id", pedidoId),
+    ]);
+
+  return {
+    pedido,
+    transicoes: transicoes ?? [],
+    contratos: contratos ?? [],
+    signatarios: signatarios ?? [],
+    representantesFooture: repsFooture ?? [],
+    testemunhasFooture: testFooture ?? [],
+  };
+}
+
+export async function listarClientes(supabase: Supa) {
+  const { data } = await supabase.from("clientes").select("*").order("razao_social", { ascending: true });
+  return data ?? [];
+}
+
+export async function listarSignatariosDoCliente(supabase: Supa, clienteId: string) {
+  const { data } = await supabase
+    .from("signatarios_cliente")
+    .select("*")
+    .eq("cliente_id", clienteId)
+    .order("criado_em", { ascending: false });
+  return data ?? [];
+}
+
+export async function listarRepresentantesFooture(supabase: Supa) {
+  const { data } = await supabase.from("representantes_footure").select("*").eq("ativo", true).order("nome");
+  return data ?? [];
+}
+
+export async function listarUsuarios(supabase: Supa) {
+  const { data } = await supabase.from("profiles").select("*").order("nome");
+  return data ?? [];
+}
