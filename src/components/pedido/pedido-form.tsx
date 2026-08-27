@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo, useState, type FocusEvent } from "react";
 import { Building2, Package, CreditCard, CalendarRange, ScrollText, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox, ComboboxInputGroup, ComboboxInput, ComboboxClear, ComboboxIcon, ComboboxPopup, ComboboxList, ComboboxEmpty, ComboboxItem } from "@/components/ui/combobox";
 import { Separator } from "@/components/ui/separator";
 import { BlocoFormulario } from "./bloco-formulario";
 import { ResumoPedido } from "./resumo-pedido";
@@ -74,6 +75,12 @@ interface Props {
   dadosIniciais?: DadosIniciaisPedido;
 }
 
+// Campos numéricos partem de 0 — sem isso, clicar pra digitar deixa o "0" na
+// frente do valor novo em vez de substituí-lo.
+function selecionarConteudo(e: FocusEvent<HTMLInputElement>) {
+  e.target.select();
+}
+
 function somarMeses(dataISO: string, meses: number): string {
   if (!dataISO) return "";
   const [ano, mes, dia] = dataISO.split("-").map(Number);
@@ -93,6 +100,13 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
   const clienteSelecionado = clientes.find((c) => c.id === clienteId);
   const perfil: "clube" | "agente" = cadastrandoNovo ? novoCliente.tipo : (clienteSelecionado?.tipo ?? "clube");
 
+  // Clientes já chegam ordenados por razão social (query em consultas.ts) — o combobox só filtra por rótulo.
+  const clienteItens = useMemo(
+    () => clientes.map((c) => ({ value: c.id, label: `${c.razaoSocial} (${c.tipo})` })),
+    [clientes],
+  );
+  const clienteComboboxValue = clienteItens.find((i) => i.value === clienteId) ?? null;
+
   const [nomePlanoImportado, setNomePlanoImportado] = useState(d?.nomePlanoImportado ?? "");
   const [plano, setPlano] = useState(d?.plano ?? "");
   const [planoLegadoConfirmado, setPlanoLegadoConfirmado] = useState(d?.planoLegadoConfirmado ?? false);
@@ -104,25 +118,14 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
   const [formaPagamento, setFormaPagamento] = useState<"avista" | "parcelado">(d?.formaPagamento ?? "parcelado");
   const [meioPagamento, setMeioPagamento] = useState<MeioPagamento>(d?.meioPagamento ?? "boleto");
   const [numeroParcelas, setNumeroParcelas] = useState(d?.numeroParcelas ?? 12);
-  const [valorMensal, setValorMensalRaw] = useState(d?.valorMensal ?? 0);
-  const [valorTotal, setValorTotal] = useState(d?.valorTotal ?? 0);
-  const [valorTotalEditadoManualmente, setValorTotalEditadoManualmente] = useState(!!d);
+  const [valorMensal, setValorMensal] = useState(d?.valorMensal ?? 0);
 
-  // Valor total é sugerido a partir de parcela × nº de parcelas (parcelado),
-  // mas continua editável — negociações com desconto/condição especial
-  // ainda precisam poder divergir do cálculo puro (ver alerta de coerência).
-  function setValorMensal(v: number) {
-    setValorMensalRaw(v);
-    if (formaPagamento === "parcelado" && !valorTotalEditadoManualmente) {
-      setValorTotal(Number((v * numeroParcelas).toFixed(2)));
-    }
-  }
-  function aoMudarNumeroParcelas(n: number) {
-    setNumeroParcelas(n);
-    if (formaPagamento === "parcelado" && !valorTotalEditadoManualmente) {
-      setValorTotal(Number((valorMensal * n).toFixed(2)));
-    }
-  }
+  // Valor total não é mais editável diretamente — é sempre a soma derivada da
+  // parcela × nº de parcelas (parcelado) ou do próprio valor único (à vista).
+  const valorTotal = useMemo(
+    () => (formaPagamento === "parcelado" ? Number((valorMensal * numeroParcelas).toFixed(2)) : valorMensal),
+    [formaPagamento, valorMensal, numeroParcelas],
+  );
   const [valorLicencaAdicional, setValorLicencaAdicional] = useState(d?.valorLicencaAdicional ?? 0);
   const [valorMensalApi, setValorMensalApi] = useState(d?.valorMensalApi ?? 0);
   const [valorMensalSoftware, setValorMensalSoftware] = useState(d?.valorMensalSoftware ?? 0);
@@ -225,18 +228,23 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           {!cadastrandoNovo ? (
             <div className="flex flex-col gap-2">
               <Label>Cliente existente</Label>
-              <Select value={clienteId} onValueChange={(v) => setClienteId(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.razaoSocial} ({c.tipo})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox items={clienteItens} value={clienteComboboxValue} onValueChange={(item) => setClienteId(item?.value ?? "")}>
+                <ComboboxInputGroup>
+                  <ComboboxInput placeholder="Buscar cliente por nome..." />
+                  <ComboboxClear />
+                  <ComboboxIcon />
+                </ComboboxInputGroup>
+                <ComboboxPopup>
+                  <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(item: { value: string; label: string }) => (
+                      <ComboboxItem key={item.value} value={item}>
+                        {item.label}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxPopup>
+              </Combobox>
               <Button type="button" variant="link" className="self-start px-0" onClick={() => setCadastrandoNovo(true)}>
                 + cadastrar novo cliente
               </Button>
@@ -329,11 +337,23 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label>Licenças pagas</Label>
-              <Input type="number" min={0} value={licencasPagas} onChange={(e) => setLicencasPagas(Number(e.target.value))} />
+              <Input
+                type="number"
+                min={0}
+                value={licencasPagas}
+                onChange={(e) => setLicencasPagas(Number(e.target.value))}
+                onFocus={selecionarConteudo}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Licenças gratuitas</Label>
-              <Input type="number" min={0} value={licencasGratuitas} onChange={(e) => setLicencasGratuitas(Number(e.target.value))} />
+              <Input
+                type="number"
+                min={0}
+                value={licencasGratuitas}
+                onChange={(e) => setLicencasGratuitas(Number(e.target.value))}
+                onFocus={selecionarConteudo}
+              />
             </div>
           </div>
         </BlocoFormulario>
@@ -382,6 +402,7 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                     setValorMensalApi(v);
                     setValorMensal(v + valorMensalSoftware);
                   }}
+                  onFocus={selecionarConteudo}
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -395,6 +416,7 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                     setValorMensalSoftware(v);
                     setValorMensal(v + valorMensalApi);
                   }}
+                  onFocus={selecionarConteudo}
                 />
               </div>
               <p className="col-span-2 text-xs text-muted-foreground">
@@ -411,27 +433,26 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                   type="number"
                   min={1}
                   value={numeroParcelas}
-                  onChange={(e) => aoMudarNumeroParcelas(Number(e.target.value))}
+                  onChange={(e) => setNumeroParcelas(Number(e.target.value))}
+                  onFocus={selecionarConteudo}
                 />
               </div>
             )}
             <div className="flex flex-col gap-2">
               <Label>Valor da parcela</Label>
-              <Input type="number" step="0.01" value={valorMensal} onChange={(e) => setValorMensal(Number(e.target.value))} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>
-                Valor total{formaPagamento === "parcelado" ? " (parcela × número de parcelas, editável)" : ""}
-              </Label>
               <Input
                 type="number"
                 step="0.01"
-                value={valorTotal}
-                onChange={(e) => {
-                  setValorTotal(Number(e.target.value));
-                  setValorTotalEditadoManualmente(true);
-                }}
+                value={valorMensal}
+                onChange={(e) => setValorMensal(Number(e.target.value))}
+                onFocus={selecionarConteudo}
               />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>
+                Valor total{formaPagamento === "parcelado" ? " (parcela × número de parcelas)" : ""}
+              </Label>
+              <Input type="number" step="0.01" value={valorTotal} disabled />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Valor da licença adicional</Label>
@@ -440,6 +461,7 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                 step="0.01"
                 value={valorLicencaAdicional}
                 onChange={(e) => setValorLicencaAdicional(Number(e.target.value))}
+                onFocus={selecionarConteudo}
               />
             </div>
           </div>
@@ -453,7 +475,14 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <>
                 <div className="flex flex-col gap-2">
                   <Label>Dia de vencimento recorrente</Label>
-                  <Input type="number" min={1} max={31} value={diaVencimento} onChange={(e) => setDiaVencimento(Number(e.target.value))} />
+                  <Input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={diaVencimento}
+                    onChange={(e) => setDiaVencimento(Number(e.target.value))}
+                    onFocus={selecionarConteudo}
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Convenção de parcelas</Label>
