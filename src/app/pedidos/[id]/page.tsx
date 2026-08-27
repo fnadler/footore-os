@@ -3,6 +3,8 @@ import { Building2, Package, Users, FileStack, History } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe } from "@/lib/pedidos/consultas";
+import { urlLogoCliente } from "@/lib/clientes/consultas";
+import { LogoCliente } from "@/components/clientes/logo-cliente";
 import { gerarAlertas } from "@/lib/validacoes/pedido";
 import { detectarPlanoLegado } from "@/lib/contratos/legado";
 import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
@@ -44,7 +46,9 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
     endereco: string;
     tipo: "clube" | "agente";
     foro_preferencial: string;
+    logo_path: string | null;
   } | null;
+  const logoClienteUrl = urlLogoCliente(supabase, cliente?.logo_path ?? null);
   const vendedorNome = (pedido.profiles as unknown as { nome: string } | null)?.nome;
 
   const representantesLegais = signatarios.filter((s) => s.tipo === "representante_legal");
@@ -112,10 +116,13 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BlocoFormulario numero={1} titulo="Cliente" icon={Building2}>
-          <div className="flex flex-col">
-            <InfoRow label="Razão social" value={cliente?.razao_social} />
-            <InfoRow label="CNPJ" value={cliente?.cnpj} />
-            <InfoRow label="Endereço" value={cliente?.endereco} longo />
+          <div className="flex flex-col gap-4">
+            <LogoCliente url={logoClienteUrl} nome={cliente?.razao_social ?? "Cliente"} tamanho="md" />
+            <div className="flex flex-col">
+              <InfoRow label="Razão social" value={cliente?.razao_social} />
+              <InfoRow label="CNPJ" value={cliente?.cnpj} />
+              <InfoRow label="Endereço" value={cliente?.endereco} longo />
+            </div>
           </div>
         </BlocoFormulario>
 

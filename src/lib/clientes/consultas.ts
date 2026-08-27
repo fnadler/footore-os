@@ -28,3 +28,9 @@ export async function buscarCliente(supabase: Supa, clienteId: string) {
   logSeErro(`buscarCliente(${clienteId})`, error);
   return data ?? null;
 }
+
+/** getPublicUrl é síncrono (só monta a URL) — o bucket `logos-clientes` é público. */
+export function urlLogoCliente(supabase: Supa, logoPath: string | null): string | null {
+  if (!logoPath) return null;
+  return supabase.storage.from("logos-clientes").getPublicUrl(logoPath).data.publicUrl;
+}

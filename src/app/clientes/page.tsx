@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { listarClientesComContagemPedidos } from "@/lib/clientes/consultas";
+import { listarClientesComContagemPedidos, urlLogoCliente } from "@/lib/clientes/consultas";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExcluirClienteDialog } from "@/components/clientes/excluir-cliente-dialog";
+import { LogoCliente } from "@/components/clientes/logo-cliente";
 
 export default async function ClientesPage() {
   const supabase = await createClient();
@@ -23,6 +24,7 @@ export default async function ClientesPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead />
               <TableHead>Razão social</TableHead>
               <TableHead>Perfil</TableHead>
               <TableHead>CNPJ</TableHead>
@@ -34,6 +36,9 @@ export default async function ClientesPage() {
           <TableBody>
             {clientes.map((c) => (
               <TableRow key={c.id}>
+                <TableCell>
+                  <LogoCliente url={urlLogoCliente(supabase, c.logo_path)} nome={c.razao_social} />
+                </TableCell>
                 <TableCell className="font-medium text-foreground">{c.razao_social}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className="capitalize">

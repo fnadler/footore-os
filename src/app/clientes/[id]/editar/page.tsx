@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { buscarCliente } from "@/lib/clientes/consultas";
+import { buscarCliente, urlLogoCliente } from "@/lib/clientes/consultas";
 import { ClienteForm } from "@/components/clientes/cliente-form";
 
 export default async function EditarClientePage({ params }: PageProps<"/clientes/[id]/editar">) {
@@ -9,9 +9,7 @@ export default async function EditarClientePage({ params }: PageProps<"/clientes
   const cliente = await buscarCliente(supabase, id);
   if (!cliente) notFound();
 
-  const logoUrl = cliente.logo_path
-    ? supabase.storage.from("logos-clientes").getPublicUrl(cliente.logo_path).data.publicUrl
-    : null;
+  const logoUrl = urlLogoCliente(supabase, cliente.logo_path);
 
   return (
     <div className="flex flex-col gap-6">
