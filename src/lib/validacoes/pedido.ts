@@ -13,9 +13,13 @@ export type CodigoAlerta =
   | "licencas_gratuitas"
   | "foro_divergente";
 
+export type SeveridadeAlerta = "aviso" | "erro";
+
 export interface AlertaPedido {
   codigo: CodigoAlerta;
   mensagem: string;
+  /** "erro" é impeditivo pra assinatura (hoje só a falta de representante legal); os demais são revisáveis. */
+  severidade: SeveridadeAlerta;
 }
 
 export const FORO_DEFAULT = "Porto Alegre - RS";
@@ -45,6 +49,7 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
   alertas.push({
     codigo: "dados_cadastrais",
     mensagem: "Confira razão social, CNPJ e endereço do cliente antes de aprovar — esses dados vão para o contrato.",
+    severidade: "aviso",
   });
 
   if (!dados.temRepresentanteLegal) {
@@ -52,6 +57,7 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
       codigo: "representante_ausente",
       mensagem:
         "Nenhum representante legal do cliente cadastrado ainda. O pedido pode seguir para aprovação, mas não poderá ser liberado para assinatura sem isso.",
+      severidade: "erro",
     });
   }
 
@@ -59,6 +65,7 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
     alertas.push({
       codigo: "plano_legado",
       mensagem: `Nome de plano legado detectado ("${dados.planoLegadoNomeOriginal}"). Confirme o plano novo correspondente antes de prosseguir — o contrato sempre usa o nome novo.`,
+      severidade: "aviso",
     });
   }
 
@@ -70,6 +77,7 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
       alertas.push({
         codigo: "valor_incoerente",
         mensagem: `Valor da parcela × ${numeroParcelas} (${esperado.toFixed(2)}) não bate com o valor total (${dados.valorTotal.toFixed(2)}). Pode ser desconto, licença grátis ou condição especial — confirme antes de aprovar; o sistema não recalcula sozinho.`,
+        severidade: "aviso",
       });
     }
   }
@@ -78,6 +86,7 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
     alertas.push({
       codigo: "licencas_gratuitas",
       mensagem: `${dados.licencasGratuitas} licença(s) gratuita(s) será(ão) refletida(s) no texto "Licenças Contempladas" do contrato.`,
+      severidade: "aviso",
     });
   }
 
@@ -85,6 +94,7 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
     alertas.push({
       codigo: "foro_divergente",
       mensagem: `Foro "${dados.foro}" diverge do padrão (${FORO_DEFAULT}). Confirme que o cliente realmente impôs esse foro.`,
+      severidade: "aviso",
     });
   }
 

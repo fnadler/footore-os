@@ -12,7 +12,8 @@ import { StepperPedido } from "@/components/pedido/stepper-pedido";
 import { ProximaAcao } from "@/components/pedido/proxima-acao";
 import { BlocoFormulario } from "@/components/pedido/bloco-formulario";
 import { InfoRow } from "@/components/pedido/info-row";
-import { UploadNovaVersao } from "@/components/pedido/upload-nova-versao";
+import { ListaPessoas } from "@/components/pedido/lista-pessoas";
+import { TimelineTransicoes, type EventoTimeline } from "@/components/pedido/timeline-transicoes";
 
 function formatarMoeda(v: number | null) {
   if (v == null) return "—";
@@ -20,6 +21,12 @@ function formatarMoeda(v: number | null) {
 }
 function formatarData(iso: string) {
   return new Date(iso).toLocaleString("pt-BR");
+}
+/** vigencia_inicio/fim vêm como "aaaa-mm-dd" (coluna `date`) — divide a string em vez de
+ * usar Date pra não sofrer o deslocamento de fuso horário do parse UTC-meia-noite. */
+function formatarDataBr(iso: string) {
+  const [ano, mes, dia] = iso.split("-");
+  return `${dia}/${mes}/${ano}`;
 }
 
 export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/[id]">) {
@@ -65,6 +72,19 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
     }),
   );
 
+  // "criado" não vira uma linha em `transicoes` (o pedido nasce em rascunho sem RPC) — sintetiza
+  // esse evento a partir de pedidos.vendedor_id/criado_em pra não perder quem abriu o pedido no histórico.
+  const eventosTimeline: EventoTimeline[] = [
+    { id: "criado", data: pedido.criado_em, nome: vendedorNome ?? "—", titulo: "Pedido criado" },
+    ...transicoes.map((t) => ({
+      id: t.id,
+      data: t.criado_em,
+      nome: (t.profiles as unknown as { nome: string } | null)?.nome ?? "—",
+      titulo: `${t.de ? ROTULO_STATUS[t.de] : "Criado"} → ${ROTULO_STATUS[t.para]}`,
+      comentario: t.comentario,
+    })),
+  ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -88,10 +108,6 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
         <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
           Última tentativa de geração falhou: {pedido.geracao_contrato_erro}
         </p>
-      )}
-
-      {pedido.status === "em_revisao_juridica" && (sessao.papel === "juridico" || sessao.papel === "admin") && (
-        <UploadNovaVersao pedidoId={pedido.id} />
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -122,7 +138,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
                 value={`${formatarMoeda(pedido.valor_mensal_api)} / ${formatarMoeda(pedido.valor_mensal_software)}`}
               />
             )}
-            <InfoRow label="Vigência" value={`${pedido.vigencia_inicio} a ${pedido.vigencia_fim}`} />
+            <InfoRow label="Vigência" value={`${formatarDataBr(pedido.vigencia_inicio)} a ${formatarDataBr(pedido.vigencia_fim)}`} />
             <InfoRow label="Foro" value={pedido.foro} />
             <InfoRow label="Multa" value={pedido.multa_texto} longo />
             {pedido.condicao_especial && <InfoRow label="Condição especial" value={pedido.condicao_especial} longo />}
@@ -130,41 +146,35 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
         </BlocoFormulario>
 
         <BlocoFormulario numero={3} titulo="Signatários" icon={Users}>
-          <div className="flex flex-col gap-3 text-sm">
-            <div>
-              <p className="font-medium">Representantes legais do cliente</p>
-              {representantesLegais.length === 0 && <p className="text-muted-foreground">Nenhum cadastrado.</p>}
-              {representantesLegais.map((s, i) => {
+          <div className="flex flex-col gap-4">
+            <ListaPessoas
+              titulo="Representantes legais do cliente"
+              pessoas={representantesLegais.map((s) => {
                 const sc = s.signatarios_cliente as unknown as { nome_completo: string; email: string; cpf: string } | null;
-                return (
-                  <p key={i}>
-                    {sc?.nome_completo} — {sc?.email} — {sc?.cpf}
-                  </p>
-                );
+                return { nome: sc?.nome_completo ?? "—", email: sc?.email, cpf: sc?.cpf };
               })}
-            </div>
-            <div>
-              <p className="font-medium">Testemunhas do cliente</p>
-              {testemunhasCliente.length === 0 && <p className="text-muted-foreground">Nenhuma cadastrada.</p>}
-              {testemunhasCliente.map((s, i) => {
+            />
+            <ListaPessoas
+              titulo="Testemunhas do cliente"
+              pessoas={testemunhasCliente.map((s) => {
                 const sc = s.signatarios_cliente as unknown as { nome_completo: string; email: string; cpf: string } | null;
-                return <p key={i}>{sc?.nome_completo}</p>;
+                return { nome: sc?.nome_completo ?? "—", email: sc?.email, cpf: sc?.cpf };
               })}
-            </div>
-            <div>
-              <p className="font-medium">Representante(s) da Footure</p>
-              {representantesFooture.length === 0 && <p className="text-muted-foreground">Nenhum selecionado.</p>}
-              {representantesFooture.map((r, i) => (
-                <p key={i}>{(r.representantes_footure as unknown as { nome: string } | null)?.nome}</p>
-              ))}
-            </div>
-            <div>
-              <p className="font-medium">Testemunhas da Footure</p>
-              {testemunhasFooture.length === 0 && <p className="text-muted-foreground">Nenhuma cadastrada.</p>}
-              {testemunhasFooture.map((t) => (
-                <p key={t.id}>{t.nome_completo}</p>
-              ))}
-            </div>
+              vazio="Nenhuma cadastrada."
+            />
+            <ListaPessoas
+              titulo="Representante(s) da Footure"
+              pessoas={representantesFooture.map((r) => {
+                const rf = r.representantes_footure as unknown as { nome: string; email: string | null; cpf: string | null } | null;
+                return { nome: rf?.nome ?? "—", email: rf?.email, cpf: rf?.cpf };
+              })}
+              vazio="Nenhum selecionado."
+            />
+            <ListaPessoas
+              titulo="Testemunhas da Footure"
+              pessoas={testemunhasFooture.map((t) => ({ nome: t.nome_completo, email: t.email, cpf: t.cpf }))}
+              vazio="Nenhuma cadastrada."
+            />
           </div>
         </BlocoFormulario>
 
@@ -191,18 +201,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
       </div>
 
       <BlocoFormulario numero={5} titulo="Linha do tempo" icon={History}>
-        <div className="flex flex-col gap-2 text-sm">
-          {transicoes.length === 0 && <p className="text-muted-foreground">Sem transições ainda.</p>}
-          {transicoes.map((t) => (
-            <div key={t.id} className="border-b border-border pb-2 last:border-0">
-              <p>
-                <strong>{t.de ? ROTULO_STATUS[t.de] : "criado"}</strong> → <strong>{ROTULO_STATUS[t.para]}</strong> ·{" "}
-                {(t.profiles as unknown as { nome: string } | null)?.nome} · {formatarData(t.criado_em)}
-              </p>
-              {t.comentario && <p className="text-muted-foreground">{t.comentario}</p>}
-            </div>
-          ))}
-        </div>
+        <TimelineTransicoes eventos={eventosTimeline} />
       </BlocoFormulario>
     </div>
   );

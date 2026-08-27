@@ -79,7 +79,7 @@ export async function buscarPedidoDetalhe(supabase: Supa, pedidoId: string) {
       .from("pedido_signatarios")
       .select("tipo, signatarios_cliente(id, nome_completo, email, cpf)")
       .eq("pedido_id", pedidoId),
-    supabase.from("pedido_representantes_footure").select("representantes_footure(id, nome)").eq("pedido_id", pedidoId),
+    supabase.from("pedido_representantes_footure").select("representantes_footure(id, nome, email, cpf)").eq("pedido_id", pedidoId),
     supabase.from("pedido_testemunhas_footure").select("*").eq("pedido_id", pedidoId),
   ]);
   logSeErro("buscarPedidoDetalhe:transicoes", erroTransicoes);

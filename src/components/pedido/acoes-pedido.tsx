@@ -6,6 +6,17 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { UploadNovaVersao } from "@/components/pedido/upload-nova-versao";
+import {
   aprovarPedidoAction,
   reprovarPedidoAction,
   tentarGerarNovamenteAction,
@@ -133,12 +144,8 @@ export function AcoesPedido({
         >
           Liberar para assinatura
         </Button>
-        <ComComentario
-          rotuloBotao="Rejeitar contrato (regenerar)"
-          placeholder="O que precisa mudar? (obrigatório)"
-          variant="outline"
-          onConfirmar={(c) => rodar(() => rejeitarContratoAction(pedidoId, c), "Contrato rejeitado — regenerando…")}
-        />
+        <RegenerarContratoDialog pedidoId={pedidoId} />
+        <SubirNovaVersaoDialog pedidoId={pedidoId} />
       </div>
     );
   }
@@ -155,4 +162,68 @@ export function AcoesPedido({
   }
 
   return null;
+}
+
+function RegenerarContratoDialog({ pedidoId }: { pedidoId: string }) {
+  const [aberto, setAberto] = useState(false);
+  const [comentario, setComentario] = useState("");
+  const { pendente, rodar } = useAcao();
+
+  function confirmar() {
+    rodar(async () => {
+      await rejeitarContratoAction(pedidoId, comentario);
+      setAberto(false);
+      setComentario("");
+    }, "Contrato marcado para regeneração.");
+  }
+
+  return (
+    <Dialog open={aberto} onOpenChange={setAberto}>
+      <DialogTrigger render={<Button type="button" variant="outline" />}>Regenerar</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Regenerar contrato</DialogTitle>
+          <DialogDescription>
+            O pedido volta para &quot;aprovado&quot; e o contrato é gerado novamente. Descreva o que precisa mudar.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          placeholder="O que precisa mudar? (obrigatório)"
+          value={comentario}
+          onChange={(e) => setComentario(e.target.value)}
+          rows={3}
+        />
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
+          <Button type="button" disabled={pendente || !comentario.trim()} onClick={confirmar}>
+            {pendente ? "Enviando…" : "Confirmar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SubirNovaVersaoDialog({ pedidoId }: { pedidoId: string }) {
+  const [aberto, setAberto] = useState(false);
+  const router = useRouter();
+
+  return (
+    <Dialog open={aberto} onOpenChange={setAberto}>
+      <DialogTrigger render={<Button type="button" variant="outline" />}>Subir nova versão</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Subir nova versão do contrato</DialogTitle>
+          <DialogDescription>Envie o .docx editado manualmente — vira a versão mais recente do contrato.</DialogDescription>
+        </DialogHeader>
+        <UploadNovaVersao
+          pedidoId={pedidoId}
+          onSucesso={() => {
+            setAberto(false);
+            router.refresh();
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -272,6 +272,7 @@ export async function enviarParaAssinaturaStubAction(pedidoId: string) {
 
 export interface SubirVersaoState {
   erro?: string;
+  sucesso?: boolean;
 }
 
 export async function subirNovaVersaoAction(_prev: SubirVersaoState, formData: FormData): Promise<SubirVersaoState> {
@@ -292,5 +293,5 @@ export async function subirNovaVersaoAction(_prev: SubirVersaoState, formData: F
   }
   revalidatePath("/juridico");
   revalidatePath(`/pedidos/${pedidoId}`);
-  redirect(`/pedidos/${pedidoId}`);
+  return { sucesso: true };
 }
