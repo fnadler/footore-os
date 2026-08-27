@@ -22,6 +22,8 @@ const PedidoPayloadSchema = z.object({
     .object({
       tipo: z.enum(["clube", "agente"]),
       razaoSocial: z.string().min(1),
+      nomeFantasia: z.string().optional(),
+      apelido: z.string().optional(), // só faz sentido pra clube — validado na UI, não aqui
       cnpj: z.string().min(1),
       endereco: z.string().min(1),
     })
@@ -89,6 +91,8 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
       .insert({
         tipo: payload.novoCliente.tipo,
         razao_social: payload.novoCliente.razaoSocial,
+        nome_fantasia: payload.novoCliente.nomeFantasia || null,
+        apelido: payload.novoCliente.tipo === "clube" ? payload.novoCliente.apelido || null : null,
         cnpj: payload.novoCliente.cnpj,
         endereco: payload.novoCliente.endereco,
       })
@@ -96,6 +100,18 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
       .single();
     if (error || !cliente) return { erro: `Falha ao cadastrar cliente: ${error?.message}` };
     clienteId = cliente.id;
+
+    const imagem = formData.get("imagemNovoCliente") as File | null;
+    if (imagem && imagem.size > 0) {
+      const path = `${clienteId}/logo`;
+      const buffer = Buffer.from(await imagem.arrayBuffer());
+      const { error: erroUpload } = await supabase.storage
+        .from("logos-clientes")
+        .upload(path, buffer, { contentType: imagem.type, upsert: true });
+      if (!erroUpload) {
+        await supabase.from("clientes").update({ logo_path: path }).eq("id", clienteId);
+      }
+    }
   }
   if (!clienteId) return { erro: "Selecione um cliente existente ou cadastre um novo." };
   if (payload.formaPagamento === "parcelado" && !payload.numeroParcelas) {

@@ -45,36 +45,42 @@ export function ClienteForm({ cliente }: { cliente?: ClienteFormValores }) {
 
       <BlocoFormulario numero={1} titulo="Dados do cliente" icon={Building2}>
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-2">
-            <Label>Perfil</Label>
-            <Select value={tipo} onValueChange={(v) => setTipo((v as TipoCliente) ?? "clube")}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="clube">Clube</SelectItem>
-                <SelectItem value="agente">Agente</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label>Perfil</Label>
+              <Select value={tipo} onValueChange={(v) => setTipo((v as TipoCliente) ?? "clube")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clube">Clube</SelectItem>
+                  <SelectItem value="agente">Agente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>CNPJ</Label>
+              <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} required />
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label>Razão social</Label>
-            <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} required />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>Nome fantasia</Label>
-            <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label>Razão social</Label>
+              <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} required />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Nome fantasia</Label>
+              <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
+            </div>
           </div>
           {tipo === "clube" && (
-            <div className="flex flex-col gap-2">
-              <Label>Apelido</Label>
-              <Input value={apelido} onChange={(e) => setApelido(e.target.value)} placeholder="ex.: Timão" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label>Apelido</Label>
+                <Input value={apelido} onChange={(e) => setApelido(e.target.value)} placeholder="ex.: Timão" />
+              </div>
             </div>
           )}
-          <div className="flex flex-col gap-2">
-            <Label>CNPJ</Label>
-            <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} required />
-          </div>
           <div className="flex flex-col gap-2">
             <Label>Endereço</Label>
             <Textarea value={endereco} onChange={(e) => setEndereco(e.target.value)} rows={2} required />

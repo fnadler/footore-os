@@ -95,7 +95,15 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
 
   const [clienteId, setClienteId] = useState<string>(d?.clienteId ?? "");
   const [cadastrandoNovo, setCadastrandoNovo] = useState(!d && clientes.length === 0);
-  const [novoCliente, setNovoCliente] = useState({ tipo: "clube" as "clube" | "agente", razaoSocial: "", cnpj: "", endereco: "" });
+  const [novoCliente, setNovoCliente] = useState({
+    tipo: "clube" as "clube" | "agente",
+    razaoSocial: "",
+    nomeFantasia: "",
+    apelido: "",
+    cnpj: "",
+    endereco: "",
+  });
+  const [previewLogoNovoCliente, setPreviewLogoNovoCliente] = useState<string | null>(null);
 
   const clienteSelecionado = clientes.find((c) => c.id === clienteId);
   const perfil: "clube" | "agente" = cadastrandoNovo ? novoCliente.tipo : (clienteSelecionado?.tipo ?? "clube");
@@ -251,29 +259,75 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2">
-                <Label>Perfil</Label>
-                <Select value={novoCliente.tipo} onValueChange={(v) => setNovoCliente({ ...novoCliente, tipo: v as "clube" | "agente" })}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="clube">Clube</SelectItem>
-                    <SelectItem value="agente">Agente</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Perfil</Label>
+                  <Select value={novoCliente.tipo} onValueChange={(v) => setNovoCliente({ ...novoCliente, tipo: v as "clube" | "agente" })}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="clube">Clube</SelectItem>
+                      <SelectItem value="agente">Agente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>CNPJ</Label>
+                  <Input value={novoCliente.cnpj} onChange={(e) => setNovoCliente({ ...novoCliente, cnpj: e.target.value })} />
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <Label>Razão social</Label>
-                <Input value={novoCliente.razaoSocial} onChange={(e) => setNovoCliente({ ...novoCliente, razaoSocial: e.target.value })} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Razão social</Label>
+                  <Input value={novoCliente.razaoSocial} onChange={(e) => setNovoCliente({ ...novoCliente, razaoSocial: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Nome fantasia</Label>
+                  <Input value={novoCliente.nomeFantasia} onChange={(e) => setNovoCliente({ ...novoCliente, nomeFantasia: e.target.value })} />
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <Label>CNPJ</Label>
-                <Input value={novoCliente.cnpj} onChange={(e) => setNovoCliente({ ...novoCliente, cnpj: e.target.value })} />
-              </div>
+              {novoCliente.tipo === "clube" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label>Apelido</Label>
+                    <Input
+                      value={novoCliente.apelido}
+                      onChange={(e) => setNovoCliente({ ...novoCliente, apelido: e.target.value })}
+                      placeholder="ex.: Timão"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 <Label>Endereço</Label>
                 <Textarea value={novoCliente.endereco} onChange={(e) => setNovoCliente({ ...novoCliente, endereco: e.target.value })} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Logo da agência ou escudo do clube</Label>
+                <div className="flex items-center gap-4">
+                  {previewLogoNovoCliente ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:), sem otimização necessária
+                    <img
+                      src={previewLogoNovoCliente}
+                      alt="Prévia do logo"
+                      className="size-16 shrink-0 rounded-lg border border-border bg-muted object-contain p-1"
+                    />
+                  ) : (
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
+                      <Building2 className="size-5" />
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    name="imagemNovoCliente"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const arquivo = e.target.files?.[0];
+                      if (arquivo) setPreviewLogoNovoCliente(URL.createObjectURL(arquivo));
+                    }}
+                  />
+                </div>
               </div>
               {clientes.length > 0 && (
                 <Button type="button" variant="link" className="self-start px-0" onClick={() => setCadastrandoNovo(false)}>
