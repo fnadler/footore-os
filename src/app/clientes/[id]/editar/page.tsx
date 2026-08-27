@@ -9,6 +9,10 @@ export default async function EditarClientePage({ params }: PageProps<"/clientes
   const cliente = await buscarCliente(supabase, id);
   if (!cliente) notFound();
 
+  const logoUrl = cliente.logo_path
+    ? supabase.storage.from("logos-clientes").getPublicUrl(cliente.logo_path).data.publicUrl
+    : null;
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold">Editar cliente</h1>
@@ -17,9 +21,12 @@ export default async function EditarClientePage({ params }: PageProps<"/clientes
           id: cliente.id,
           tipo: cliente.tipo,
           razaoSocial: cliente.razao_social,
+          nomeFantasia: cliente.nome_fantasia,
+          apelido: cliente.apelido,
           cnpj: cliente.cnpj,
           endereco: cliente.endereco,
           foroPreferencial: cliente.foro_preferencial,
+          logoUrl,
         }}
       />
     </div>

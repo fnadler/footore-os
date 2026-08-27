@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import { Building2, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,20 +18,26 @@ export interface ClienteFormValores {
   id: string;
   tipo: TipoCliente;
   razaoSocial: string;
+  nomeFantasia: string | null;
+  apelido: string | null;
   cnpj: string;
   endereco: string;
   foroPreferencial: string;
+  logoUrl: string | null;
 }
 
 export function ClienteForm({ cliente }: { cliente?: ClienteFormValores }) {
   const [estado, formAction, pendente] = useActionState(salvarClienteAction, ESTADO_INICIAL);
   const [tipo, setTipo] = useState<TipoCliente>(cliente?.tipo ?? "clube");
   const [razaoSocial, setRazaoSocial] = useState(cliente?.razaoSocial ?? "");
+  const [nomeFantasia, setNomeFantasia] = useState(cliente?.nomeFantasia ?? "");
+  const [apelido, setApelido] = useState(cliente?.apelido ?? "");
   const [cnpj, setCnpj] = useState(cliente?.cnpj ?? "");
   const [endereco, setEndereco] = useState(cliente?.endereco ?? "");
   const [foroPreferencial, setForoPreferencial] = useState(cliente?.foroPreferencial ?? "Porto Alegre/RS");
+  const [previewImagem, setPreviewImagem] = useState<string | null>(cliente?.logoUrl ?? null);
 
-  const payload = { clienteId: cliente?.id, tipo, razaoSocial, cnpj, endereco, foroPreferencial };
+  const payload = { clienteId: cliente?.id, tipo, razaoSocial, nomeFantasia, apelido, cnpj, endereco, foroPreferencial };
 
   return (
     <form action={formAction} className="flex max-w-2xl flex-col gap-6">
@@ -56,6 +62,16 @@ export function ClienteForm({ cliente }: { cliente?: ClienteFormValores }) {
             <Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} required />
           </div>
           <div className="flex flex-col gap-2">
+            <Label>Nome fantasia</Label>
+            <Input value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} />
+          </div>
+          {tipo === "clube" && (
+            <div className="flex flex-col gap-2">
+              <Label>Apelido</Label>
+              <Input value={apelido} onChange={(e) => setApelido(e.target.value)} placeholder="ex.: Timão" />
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
             <Label>CNPJ</Label>
             <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} required />
           </div>
@@ -66,6 +82,30 @@ export function ClienteForm({ cliente }: { cliente?: ClienteFormValores }) {
           <div className="flex flex-col gap-2">
             <Label>Foro preferencial</Label>
             <Input value={foroPreferencial} onChange={(e) => setForoPreferencial(e.target.value)} required />
+          </div>
+        </div>
+      </BlocoFormulario>
+
+      <BlocoFormulario numero={2} titulo="Logo" descricao="Logo da agência ou escudo do clube." icon={ImagePlus}>
+        <div className="flex items-center gap-4">
+          {previewImagem ? (
+            // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:) ou URL pública do Storage, sem otimização necessária
+            <img src={previewImagem} alt="Prévia do logo" className="size-20 rounded-lg border border-border bg-muted object-contain p-1" />
+          ) : (
+            <div className="flex size-20 items-center justify-center rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
+              <ImagePlus className="size-6" />
+            </div>
+          )}
+          <div className="flex flex-1 flex-col gap-2">
+            <Input
+              type="file"
+              name="imagem"
+              accept="image/*"
+              onChange={(e) => {
+                const arquivo = e.target.files?.[0];
+                if (arquivo) setPreviewImagem(URL.createObjectURL(arquivo));
+              }}
+            />
           </div>
         </div>
       </BlocoFormulario>

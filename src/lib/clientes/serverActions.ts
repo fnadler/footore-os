@@ -10,6 +10,8 @@ const ClientePayloadSchema = z.object({
   clienteId: z.string().uuid().optional(), // presente = edição
   tipo: z.enum(["clube", "agente"]),
   razaoSocial: z.string().min(1),
+  nomeFantasia: z.string().optional(),
+  apelido: z.string().optional(), // só faz sentido pra clube — validado na UI, não aqui
   cnpj: z.string().min(1),
   endereco: z.string().min(1),
   foroPreferencial: z.string().min(1),
@@ -19,7 +21,7 @@ export interface SalvarClienteState {
   erro?: string;
 }
 
-/** Cria (ou atualiza, se clienteId vier no payload) um cliente. */
+/** Cria (ou atualiza, se clienteId vier no payload) um cliente, com upload opcional de logo. */
 export async function salvarClienteAction(_prev: SalvarClienteState, formData: FormData): Promise<SalvarClienteState> {
   await exigirPapel("vendedor", "admin");
   const bruto = JSON.parse(String(formData.get("payload") ?? "{}"));
@@ -33,17 +35,34 @@ export async function salvarClienteAction(_prev: SalvarClienteState, formData: F
   const linha = {
     tipo: payload.tipo,
     razao_social: payload.razaoSocial,
+    nome_fantasia: payload.nomeFantasia || null,
+    apelido: payload.tipo === "clube" ? payload.apelido || null : null,
     cnpj: payload.cnpj,
     endereco: payload.endereco,
     foro_preferencial: payload.foroPreferencial,
   };
 
-  if (payload.clienteId) {
-    const { error } = await supabase.from("clientes").update(linha).eq("id", payload.clienteId);
+  let clienteId = payload.clienteId;
+  if (clienteId) {
+    const { error } = await supabase.from("clientes").update(linha).eq("id", clienteId);
     if (error) return { erro: `Falha ao salvar cliente: ${error.message}` };
   } else {
-    const { error } = await supabase.from("clientes").insert(linha);
-    if (error) return { erro: `Falha ao criar cliente: ${error.message}` };
+    const { data, error } = await supabase.from("clientes").insert(linha).select("id").single();
+    if (error || !data) return { erro: `Falha ao criar cliente: ${error?.message}` };
+    clienteId = data.id;
+  }
+
+  const imagem = formData.get("imagem") as File | null;
+  if (imagem && imagem.size > 0) {
+    const path = `${clienteId}/logo`;
+    const buffer = Buffer.from(await imagem.arrayBuffer());
+    const { error: erroUpload } = await supabase.storage
+      .from("logos-clientes")
+      .upload(path, buffer, { contentType: imagem.type, upsert: true });
+    if (erroUpload) return { erro: `Cliente salvo, mas falhou ao enviar a imagem: ${erroUpload.message}` };
+
+    const { error: erroUpdate } = await supabase.from("clientes").update({ logo_path: path }).eq("id", clienteId);
+    if (erroUpdate) return { erro: `Cliente salvo, mas falhou ao registrar a imagem: ${erroUpdate.message}` };
   }
 
   revalidatePath("/clientes");

@@ -54,9 +54,12 @@ export interface Database {
           id: string;
           tipo: TipoCliente;
           razao_social: string;
+          nome_fantasia: string | null;
+          apelido: string | null;
           cnpj: string;
           endereco: string;
           foro_preferencial: string;
+          logo_path: string | null;
           criado_em: string;
           atualizado_em: string;
         },
@@ -64,16 +67,22 @@ export interface Database {
           id?: string;
           tipo: TipoCliente;
           razao_social: string;
+          nome_fantasia?: string | null;
+          apelido?: string | null;
           cnpj: string;
           endereco: string;
           foro_preferencial?: string;
+          logo_path?: string | null;
         },
         {
           tipo?: TipoCliente;
           razao_social?: string;
+          nome_fantasia?: string | null;
+          apelido?: string | null;
           cnpj?: string;
           endereco?: string;
           foro_preferencial?: string;
+          logo_path?: string | null;
         }
       >;
       signatarios_cliente: TableDef<
