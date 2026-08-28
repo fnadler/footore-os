@@ -2,10 +2,12 @@ import Link from "next/link";
 import { exigirPapel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listarPedidosDoVendedor } from "@/lib/pedidos/consultas";
+import { urlLogoCliente } from "@/lib/clientes/consultas";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { RotuloStatus } from "@/components/rotulo-status";
+import { LogoCliente } from "@/components/clientes/logo-cliente";
 
 export default async function VendedorPage() {
   const sessao = await exigirPapel("vendedor");
@@ -25,6 +27,7 @@ export default async function VendedorPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead />
               <TableHead>Cliente</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Valor total</TableHead>
@@ -33,33 +36,39 @@ export default async function VendedorPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pedidos.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{(p.clientes as unknown as { razao_social: string } | null)?.razao_social ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="capitalize">
-                    {p.perfil}
-                  </Badge>{" "}
-                  {p.plano}
-                </TableCell>
-                <TableCell>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.valor_total)}</TableCell>
-                <TableCell>
-                  <RotuloStatus status={p.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    nativeButton={false}
-                    render={
-                      <Link href={p.status === "rascunho" ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
-                        {p.status === "rascunho" ? "Editar" : "Ver"}
-                      </Link>
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+            {pedidos.map((p) => {
+              const cliente = p.clientes as unknown as { razao_social: string; logo_path: string | null } | null;
+              return (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <LogoCliente url={urlLogoCliente(supabase, cliente?.logo_path ?? null)} nome={cliente?.razao_social ?? "Cliente"} />
+                  </TableCell>
+                  <TableCell>{cliente?.razao_social ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize">
+                      {p.perfil}
+                    </Badge>{" "}
+                    {p.plano}
+                  </TableCell>
+                  <TableCell>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.valor_total)}</TableCell>
+                  <TableCell>
+                    <RotuloStatus status={p.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      nativeButton={false}
+                      render={
+                        <Link href={p.status === "rascunho" ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
+                          {p.status === "rascunho" ? "Editar" : "Ver"}
+                        </Link>
+                      }
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}

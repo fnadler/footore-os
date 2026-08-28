@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listarFilaAprovacao, listarPedidosAprovadosComErro } from "@/lib/pedidos/consultas";
+import { urlLogoCliente } from "@/lib/clientes/consultas";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { LogoCliente } from "@/components/clientes/logo-cliente";
 
 function formatarMoeda(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -41,6 +43,7 @@ export default async function AdminAprovacaoPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead />
               <TableHead>Cliente</TableHead>
               <TableHead>Vendedor</TableHead>
               <TableHead>Plano</TableHead>
@@ -49,19 +52,25 @@ export default async function AdminAprovacaoPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {fila.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{(p.clientes as unknown as { razao_social: string } | null)?.razao_social ?? "—"}</TableCell>
-                <TableCell>{(p.profiles as unknown as { nome: string } | null)?.nome ?? "—"}</TableCell>
-                <TableCell>
-                  {p.perfil} · {p.plano}
-                </TableCell>
-                <TableCell>{formatarMoeda(p.valor_total)}</TableCell>
-                <TableCell className="text-right">
-                  <Button size="sm" nativeButton={false} render={<Link href={`/pedidos/${p.id}`}>Revisar</Link>} />
-                </TableCell>
-              </TableRow>
-            ))}
+            {fila.map((p) => {
+              const cliente = p.clientes as unknown as { razao_social: string; logo_path: string | null } | null;
+              return (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <LogoCliente url={urlLogoCliente(supabase, cliente?.logo_path ?? null)} nome={cliente?.razao_social ?? "Cliente"} />
+                  </TableCell>
+                  <TableCell>{cliente?.razao_social ?? "—"}</TableCell>
+                  <TableCell>{(p.profiles as unknown as { nome: string } | null)?.nome ?? "—"}</TableCell>
+                  <TableCell>
+                    {p.perfil} · {p.plano}
+                  </TableCell>
+                  <TableCell>{formatarMoeda(p.valor_total)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" nativeButton={false} render={<Link href={`/pedidos/${p.id}`}>Revisar</Link>} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}

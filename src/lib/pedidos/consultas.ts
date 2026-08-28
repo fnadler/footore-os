@@ -16,7 +16,7 @@ function logSeErro(contexto: string, error: { message: string } | null) {
 export async function listarPedidosDoVendedor(supabase: Supa, vendedorId: string) {
   const { data, error } = await supabase
     .from("pedidos")
-    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social)")
+    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social, logo_path)")
     .eq("vendedor_id", vendedorId)
     .order("criado_em", { ascending: false });
   logSeErro("listarPedidosDoVendedor", error);
@@ -26,7 +26,7 @@ export async function listarPedidosDoVendedor(supabase: Supa, vendedorId: string
 export async function listarFilaAprovacao(supabase: Supa) {
   const { data, error } = await supabase
     .from("pedidos")
-    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social), profiles(nome)")
+    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social, logo_path), profiles(nome)")
     .eq("status", "em_aprovacao")
     .order("criado_em", { ascending: true });
   logSeErro("listarFilaAprovacao", error);
@@ -46,7 +46,7 @@ export async function listarPedidosAprovadosComErro(supabase: Supa) {
 export async function listarFilaJuridico(supabase: Supa) {
   const { data, error } = await supabase
     .from("pedidos")
-    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social)")
+    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social, logo_path)")
     .in("status", ["em_revisao_juridica", "pronto_para_assinatura", "enviado_para_assinatura"])
     .order("criado_em", { ascending: true });
   logSeErro("listarFilaJuridico", error);
