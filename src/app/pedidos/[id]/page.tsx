@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Building2, Package, Users, FileStack, History } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe } from "@/lib/pedidos/consultas";
+import { pedidoEhEditavel } from "@/lib/pedidos/statusEditavel";
+import { Button } from "@/components/ui/button";
 import { urlLogoCliente } from "@/lib/clientes/consultas";
 import { LogoCliente } from "@/components/clientes/logo-cliente";
 import { gerarAlertas } from "@/lib/validacoes/pedido";
@@ -98,7 +101,12 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
             {pedido.perfil} · {pedido.plano} · vendedor: {vendedorNome ?? "—"}
           </p>
         </div>
-        <RotuloStatus status={pedido.status} />
+        <div className="flex items-center gap-3">
+          <RotuloStatus status={pedido.status} />
+          {sessao.papel === "vendedor" && donoDoRascunho && pedidoEhEditavel(pedido.status) && (
+            <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/vendedor/${pedido.id}/editar`}>Editar</Link>} />
+          )}
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5">

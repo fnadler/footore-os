@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe, listarClientes, listarRepresentantesFooture, listarSignatariosDoCliente } from "@/lib/pedidos/consultas";
+import { pedidoEhEditavel } from "@/lib/pedidos/statusEditavel";
 import { PedidoForm, type DadosIniciaisPedido } from "@/components/pedido/pedido-form";
 
 export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/[id]/editar">) {
@@ -11,7 +12,7 @@ export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/
 
   const detalhe = await buscarPedidoDetalhe(supabase, id);
   if (!detalhe || detalhe.pedido.vendedor_id !== sessao.id) notFound();
-  if (detalhe.pedido.status !== "rascunho") notFound();
+  if (!pedidoEhEditavel(detalhe.pedido.status)) notFound();
 
   const [clientes, representantesFooture] = await Promise.all([
     listarClientes(supabase),
@@ -75,6 +76,11 @@ export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold">Editar pedido</h1>
+      {pedido.status !== "rascunho" && (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          Este pedido já saiu de rascunho. Ao salvar, ele volta para rascunho e precisa passar por aprovação de novo.
+        </p>
+      )}
       <PedidoForm
         pedidoId={pedido.id}
         clientes={clientes.map((c) => ({ id: c.id, tipo: c.tipo, razaoSocial: c.razao_social, cnpj: c.cnpj, endereco: c.endereco }))}

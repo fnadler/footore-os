@@ -1,8 +1,8 @@
-// Validações da seção 6.2 do PROMPT.md — alertas revisáveis, não travas
-// automáticas (com a única exceção dura documentada em podeLiberarParaAssinatura,
-// necessidade técnica de e-mail pra assinatura, não julgamento de negócio).
-// Puro e sem I/O — usado tanto no formulário (client) quanto nas Server
-// Actions de aprovação/liberação (server, fonte da verdade).
+// Validações da seção 6.2 do PROMPT.md — a maioria é alerta revisável, não
+// trava automática. As exceções duras são documentadas em cada função
+// (podeRegistrarPedido, podeLiberarParaAssinatura). Puro e sem I/O — usado
+// tanto no formulário (client) quanto nas Server Actions (server, fonte da
+// verdade).
 import type { Signatario } from "@/lib/contratos/gerarContrato";
 
 export type CodigoAlerta =
@@ -99,6 +99,42 @@ export function gerarAlertas(dados: DadosParaAlertas): AlertaPedido[] {
   }
 
   return alertas;
+}
+
+export interface DadosParaRegistro {
+  valorMensal: number;
+  valorTotal: number;
+  formaPagamento: "avista" | "parcelado";
+  numeroParcelas?: number;
+  vigenciaInicio: string;
+  vigenciaFim: string;
+}
+
+/**
+ * Trava dura na criação/edição do pedido: dados que alimentam o contrato e a
+ * futura importação no Bling precisam estar coerentes — signatários não
+ * entram aqui de propósito (só viram exigência em podeLiberarParaAssinatura).
+ */
+export function podeRegistrarPedido(dados: DadosParaRegistro): { ok: true } | { ok: false; motivo: string } {
+  if (dados.valorMensal <= 0) {
+    return { ok: false, motivo: "Informe um valor da parcela maior que zero." };
+  }
+
+  const numeroParcelas = dados.numeroParcelas ?? 12;
+  const totalEsperado =
+    dados.formaPagamento === "parcelado" ? Number((dados.valorMensal * numeroParcelas).toFixed(2)) : dados.valorMensal;
+  if (Math.abs(totalEsperado - dados.valorTotal) > 0.01) {
+    return {
+      ok: false,
+      motivo: `Valor total (${dados.valorTotal.toFixed(2)}) não bate com o valor da parcela × número de parcelas (${totalEsperado.toFixed(2)}). Corrija antes de registrar o pedido.`,
+    };
+  }
+
+  if (dados.vigenciaFim <= dados.vigenciaInicio) {
+    return { ok: false, motivo: "A data de fim da vigência precisa ser posterior à data de início." };
+  }
+
+  return { ok: true };
 }
 
 /**

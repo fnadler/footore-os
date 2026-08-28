@@ -2,6 +2,7 @@ import Link from "next/link";
 import { exigirPapel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listarPedidosDoVendedor } from "@/lib/pedidos/consultas";
+import { pedidoEhEditavel } from "@/lib/pedidos/statusEditavel";
 import { urlLogoCliente } from "@/lib/clientes/consultas";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -60,8 +61,8 @@ export default async function VendedorPage() {
                       size="sm"
                       nativeButton={false}
                       render={
-                        <Link href={p.status === "rascunho" ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
-                          {p.status === "rascunho" ? "Editar" : "Ver"}
+                        <Link href={pedidoEhEditavel(p.status) ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
+                          {pedidoEhEditavel(p.status) ? "Editar" : "Ver"}
                         </Link>
                       }
                     />

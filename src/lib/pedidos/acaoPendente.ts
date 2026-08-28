@@ -28,7 +28,16 @@ export function acaoPendente(status: StatusPedido, papel: PapelUsuario, donoDoRa
     };
   }
   if (status === "pronto_para_assinatura" && (papel === "juridico" || papel === "admin")) {
-    return { titulo: "Pronto para assinatura", descricao: "Dispare o envio para assinatura quando quiser seguir com o fluxo." };
+    return {
+      titulo: "Pronto para assinatura",
+      descricao: "Dispare o envio para assinatura, ou cancele o processo se precisar editar o pedido de novo.",
+    };
+  }
+  if (status === "enviado_para_assinatura" && (papel === "juridico" || papel === "admin")) {
+    return {
+      titulo: "Aguardando assinatura",
+      descricao: "Cancele o processo se precisar reabrir o pedido para edição — o resto do fluxo (Fase 3) ainda é manual.",
+    };
   }
   return null;
 }

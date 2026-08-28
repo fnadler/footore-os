@@ -174,3 +174,16 @@ export async function enviarParaAssinaturaStub(supabase: Supa, pedidoId: string,
 
   await registrarTransicao(supabase, pedidoId, "enviado_para_assinatura", comentario ?? "Envio para assinatura (stub Fase 3).");
 }
+
+/** Vendedor editou um pedido além do rascunho — reabre o fluxo do zero em vez de deixar
+ * um contrato já gerado/aprovado ficar desatualizado em relação aos dados sem ninguém perceber. */
+export async function reabrirParaEdicao(supabase: Supa, pedidoId: string) {
+  await registrarTransicao(supabase, pedidoId, "rascunho", "Pedido editado pelo vendedor — reaberto para nova aprovação.");
+  await supabase.from("pedidos").update({ geracao_contrato_erro: null }).eq("id", pedidoId);
+}
+
+/** PRONTO_PARA_ASSINATURA|ENVIADO_PARA_ASSINATURA -> EM_REVISAO_JURIDICA. Cancelamento manual
+ * (stub Fase 3 — sem Clicksign real ainda) que reabilita a edição do pedido pelo vendedor. */
+export async function cancelarAssinatura(supabase: Supa, pedidoId: string, comentario?: string) {
+  await registrarTransicao(supabase, pedidoId, "em_revisao_juridica", comentario ?? "Processo de assinatura cancelado.");
+}

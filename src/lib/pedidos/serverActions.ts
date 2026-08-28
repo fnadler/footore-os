@@ -6,7 +6,9 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { detectarPlanoLegado } from "@/lib/contratos/legado";
+import { podeRegistrarPedido } from "@/lib/validacoes/pedido";
 import * as acoes from "@/lib/pedidos/acoes";
+import { STATUS_EDITAVEIS } from "@/lib/pedidos/statusEditavel";
 
 const SignatarioSchema = z.object({
   id: z.string().uuid().optional(), // já existente em signatarios_cliente
@@ -82,6 +84,16 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
     }
   }
 
+  const gate = podeRegistrarPedido({
+    valorMensal: payload.valorMensal,
+    valorTotal: payload.valorTotal,
+    formaPagamento: payload.formaPagamento,
+    numeroParcelas: payload.numeroParcelas,
+    vigenciaInicio: payload.vigenciaInicio,
+    vigenciaFim: payload.vigenciaFim,
+  });
+  if (!gate.ok) return { erro: gate.motivo };
+
   const supabase = await createClient();
 
   let clienteId = payload.clienteId;
@@ -151,11 +163,17 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
   let pedidoId = payload.pedidoId;
   if (pedidoId) {
     const { data: existente } = await supabase.from("pedidos").select("status").eq("id", pedidoId).single();
-    if (existente?.status !== "rascunho") {
-      return { erro: "Este pedido não está mais em rascunho e não pode ser editado por aqui." };
+    if (!existente || !STATUS_EDITAVEIS.includes(existente.status)) {
+      return { erro: "Este pedido não pode mais ser editado — o contrato já foi liberado para assinatura." };
     }
     const { error } = await supabase.from("pedidos").update(linhaPedido).eq("id", pedidoId);
     if (error) return { erro: `Falha ao salvar pedido: ${error.message}` };
+
+    // Editar além do rascunho reabre o fluxo do zero — evita que um contrato
+    // já gerado/aprovado fique desatualizado em relação aos dados do pedido.
+    if (existente.status !== "rascunho") {
+      await acoes.reabrirParaEdicao(supabase, pedidoId);
+    }
 
     // Reconstrói os vínculos de signatários do zero — mais simples e seguro
     // que tentar diff incremental, dado que o formulário reenvia tudo.
@@ -283,6 +301,14 @@ export async function enviarParaAssinaturaStubAction(pedidoId: string) {
   await exigirPapel("juridico", "admin");
   const supabase = await createClient();
   await acoes.enviarParaAssinaturaStub(supabase, pedidoId);
+  revalidatePath(`/pedidos/${pedidoId}`);
+}
+
+export async function cancelarAssinaturaAction(pedidoId: string, comentario?: string) {
+  await exigirPapel("juridico", "admin");
+  const supabase = await createClient();
+  await acoes.cancelarAssinatura(supabase, pedidoId, comentario);
+  revalidatePath("/juridico");
   revalidatePath(`/pedidos/${pedidoId}`);
 }
 

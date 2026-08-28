@@ -24,6 +24,7 @@ import {
   rejeitarContratoAction,
   enviarParaAssinaturaStubAction,
   enviarParaAprovacaoAction,
+  cancelarAssinaturaAction,
 } from "@/lib/pedidos/serverActions";
 import type { PapelUsuario, StatusPedido } from "@/lib/supabase/database.types";
 
@@ -152,16 +153,63 @@ export function AcoesPedido({
 
   if (status === "pronto_para_assinatura" && (papel === "juridico" || papel === "admin")) {
     return (
-      <Button
-        disabled={pendente}
-        onClick={() => rodar(() => enviarParaAssinaturaStubAction(pedidoId), "Marcado como enviado para assinatura (stub — Fase 3).")}
-      >
-        Enviar para assinatura
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          disabled={pendente}
+          onClick={() => rodar(() => enviarParaAssinaturaStubAction(pedidoId), "Marcado como enviado para assinatura (stub — Fase 3).")}
+        >
+          Enviar para assinatura
+        </Button>
+        <CancelarAssinaturaDialog pedidoId={pedidoId} />
+      </div>
     );
   }
 
+  if (status === "enviado_para_assinatura" && (papel === "juridico" || papel === "admin")) {
+    return <CancelarAssinaturaDialog pedidoId={pedidoId} />;
+  }
+
   return null;
+}
+
+function CancelarAssinaturaDialog({ pedidoId }: { pedidoId: string }) {
+  const [aberto, setAberto] = useState(false);
+  const [comentario, setComentario] = useState("");
+  const { pendente, rodar } = useAcao();
+
+  function confirmar() {
+    rodar(async () => {
+      await cancelarAssinaturaAction(pedidoId, comentario || undefined);
+      setAberto(false);
+      setComentario("");
+    }, "Processo de assinatura cancelado — pedido voltou para revisão jurídica.");
+  }
+
+  return (
+    <Dialog open={aberto} onOpenChange={setAberto}>
+      <DialogTrigger render={<Button type="button" variant="outline" />}>Cancelar assinatura</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancelar processo de assinatura</DialogTitle>
+          <DialogDescription>
+            O pedido volta para &quot;em revisão jurídica&quot; e passa a poder ser editado pelo vendedor de novo.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          placeholder="Motivo do cancelamento (opcional)"
+          value={comentario}
+          onChange={(e) => setComentario(e.target.value)}
+          rows={3}
+        />
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>Voltar</DialogClose>
+          <Button type="button" variant="destructive" disabled={pendente} onClick={confirmar}>
+            {pendente ? "Cancelando…" : "Confirmar cancelamento"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function RegenerarContratoDialog({ pedidoId }: { pedidoId: string }) {
