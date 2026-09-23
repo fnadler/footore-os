@@ -21,9 +21,9 @@ import {
 import { cancelarPedidoAction } from "@/lib/pedidos/serverActions";
 import { MOTIVOS_CANCELAMENTO } from "@/lib/pedidos/motivosCancelamento";
 
-// Disponível na listagem de pedidos (ícone) e na tela de detalhe/edição
-// (botão) — mesmo diálogo, só muda o gatilho visual.
-export function CancelarPedidoDialog({ pedidoId, trigger = "botao" }: { pedidoId: string; trigger?: "icone" | "botao" }) {
+// Disponível na listagem de pedidos e na tela de detalhe/edição — mesmo
+// diálogo e mesmo gatilho visual nos dois lugares.
+export function CancelarPedidoDialog({ pedidoId }: { pedidoId: string }) {
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [observacao, setObservacao] = useState("");
@@ -56,16 +56,10 @@ export function CancelarPedidoDialog({ pedidoId, trigger = "botao" }: { pedidoId
 
   return (
     <Dialog open={aberto} onOpenChange={aoFechar}>
-      {trigger === "icone" ? (
-        <DialogTrigger render={<Button type="button" variant="ghost" size="icon-sm" title="Cancelar pedido" />}>
-          <Ban className="size-4" />
-        </DialogTrigger>
-      ) : (
-        <DialogTrigger render={<Button type="button" variant="outline" />}>
-          <Ban className="size-4" />
-          Cancelar pedido
-        </DialogTrigger>
-      )}
+      <DialogTrigger render={<Button type="button" variant="destructive" size="sm" />}>
+        <Ban className="size-4" />
+        Cancelar
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Cancelar pedido</DialogTitle>

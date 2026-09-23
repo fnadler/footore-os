@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Pencil, Eye } from "lucide-react";
 import { exigirPapel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listarPedidosDoVendedor } from "@/lib/pedidos/consultas";
@@ -60,18 +61,15 @@ export default async function VendedorPage() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         nativeButton={false}
-                        render={
-                          <Link href={pedidoEhEditavel(p.status) ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
-                            {pedidoEhEditavel(p.status) ? "Editar" : "Ver"}
-                          </Link>
-                        }
-                      />
-                      {p.status !== "concluido" && p.status !== "cancelado" && (
-                        <CancelarPedidoDialog pedidoId={p.id} trigger="icone" />
-                      )}
+                        render={<Link href={pedidoEhEditavel(p.status) ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`} />}
+                      >
+                        {pedidoEhEditavel(p.status) ? <Pencil className="size-4" /> : <Eye className="size-4" />}
+                        {pedidoEhEditavel(p.status) ? "Editar" : "Ver"}
+                      </Button>
+                      {p.status !== "concluido" && p.status !== "cancelado" && <CancelarPedidoDialog pedidoId={p.id} />}
                     </div>
                   </TableCell>
                 </TableRow>
