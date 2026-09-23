@@ -1,0 +1,32 @@
+{
+  "_doc": "Registro canônico de planos Footlink Scout. FONTE ÚNICA da verdade para nomes de plano, consumida pelo formulário do pedido E pelo gerador de contrato. A correspondência pedido↔contrato é garantida porque ambos usam a MESMA key canônica. O formulário grava a key (ex.: 'agente:scout-prime'), nunca texto livre.",
+  "_regras": {
+    "chave": "perfil + plano. Os mesmos rótulos (Basic, Essential, Elite) existem em clube e agente com configs diferentes — o plano sozinho nunca identifica. Sempre resolver com o perfil.",
+    "impressao_no_contrato": "printed (ex.: 'PLANO FOOTLINK SCOUT PRIME').",
+    "legado": "Nome de geração anterior NUNCA é convertido em silêncio. A normalização retorna needs_confirmation com a sugestão; um humano confirma antes de gerar.",
+    "ambiguidade": "Alguns nomes soltos são ambíguos (ver flag 'ambiguous'). Sempre needs_confirmation com os candidatos."
+  },
+  "clube": {
+    "plans": [
+      { "key": "clube:scout-starter",    "canonical": "Scout Starter",    "printed": "PLANO FOOTLINK SCOUT STARTER",    "aliases_exatos": ["scout starter","starter"], "legado": [] },
+      { "key": "clube:scout-basic",      "canonical": "Scout Basic",      "printed": "PLANO FOOTLINK SCOUT BASIC",      "aliases_exatos": ["scout basic","basic","básico"], "legado": [] },
+      { "key": "clube:scout-essential",  "canonical": "Scout Essential",  "printed": "PLANO FOOTLINK SCOUT ESSENTIAL",  "aliases_exatos": ["scout essential","essential","essencial"], "legado": [] },
+      { "key": "clube:scout-elite",      "canonical": "Scout Elite",      "printed": "PLANO FOOTLINK SCOUT ELITE",      "aliases_exatos": ["scout elite","elite"], "legado": [] },
+      { "key": "clube:scout-multi-club", "canonical": "Scout Multi-Club", "printed": "PLANO FOOTLINK SCOUT MULTI-CLUB", "aliases_exatos": ["scout multi-club","multi-club","multiclub","multi club"], "legado": [] }
+    ],
+    "licencas_especiais": [
+      { "key": "clube:feminino", "canonical": "Feminino", "obs": "Licença especial (não é plano-base). Mesma config do plano do clube, restrita a atletas do feminino. Geralmente gratuita/adicional." }
+    ],
+    "_nota_clube": "Assunção: planos de clube apenas ganharam o prefixo Scout (ladder inalterado). Confirmar com Fabiano se o ladder de clube mudou."
+  },
+  "agente": {
+    "plans": [
+      { "key": "agente:scout-single",    "canonical": "Scout Single",    "printed": "PLANO FOOTLINK SCOUT SINGLE",    "aliases_exatos": ["scout single","single"], "legado": [] },
+      { "key": "agente:scout-basic",     "canonical": "Scout Basic",     "printed": "PLANO FOOTLINK SCOUT BASIC",     "aliases_exatos": ["scout basic","basic"], "legado": ["starter","brasil"] },
+      { "key": "agente:scout-essential", "canonical": "Scout Essential", "printed": "PLANO FOOTLINK SCOUT ESSENTIAL", "aliases_exatos": ["scout essential","essential"], "legado": ["growth"] },
+      { "key": "agente:scout-prime",     "canonical": "Scout Prime",     "printed": "PLANO FOOTLINK SCOUT PRIME",     "aliases_exatos": ["scout prime"], "legado": ["pro","latam"], "ambiguous_bare": ["prime"] },
+      { "key": "agente:scout-elite",     "canonical": "Scout Elite",     "printed": "PLANO FOOTLINK SCOUT ELITE",     "aliases_exatos": ["scout elite","elite"], "legado": ["prime","global"] }
+    ],
+    "_ambiguidade_prime": "O termo 'prime' sozinho, para AGENTE, é ambíguo: pode ser o ATUAL 'Scout Prime' (aliases_exatos) OU o LEGADO 'Prime' (layer2) que virou 'Scout Elite'. Sempre needs_confirmation entre Scout Prime e Scout Elite. Só 'scout prime' explícito resolve direto para Scout Prime."
+  }
+}
