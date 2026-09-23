@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Building2, Package, Users, FileStack, History, Pencil } from "lucide-react";
+import { Building2, Package, Users, FileStack, History, Pencil, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe } from "@/lib/pedidos/consultas";
@@ -96,6 +96,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
       return { ...c, url: data?.signedUrl ?? null, urlAssinado };
     }),
   );
+  const contratoAssinado = contratosComUrl.some((c) => c.urlAssinado);
 
   // "criado" não vira uma linha em `transicoes` (o pedido nasce em rascunho sem RPC) — sintetiza
   // esse evento a partir de pedidos.vendedor_id/criado_em pra não perder quem abriu o pedido no histórico.
@@ -215,7 +216,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
           </div>
         </BlocoFormulario>
 
-        <BlocoFormulario numero={4} titulo="Versões do contrato" icon={FileStack}>
+        <BlocoFormulario numero={4} titulo={contratoAssinado ? "Contrato assinado" : "Versões do contrato"} icon={FileStack}>
           <div className="flex flex-col gap-2 text-sm">
             {contratosComUrl.length === 0 && <p className="text-muted-foreground">Nenhum contrato gerado ainda.</p>}
             {contratosComUrl.map((c) => (
@@ -229,14 +230,16 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
                 {/* Depois de assinado, só o PDF assinado fica disponível — o .docx
                     original deixa de ser o documento válido. */}
                 {c.urlAssinado ? (
-                  <a href={c.urlAssinado} className="text-sm text-primary underline" target="_blank" rel="noreferrer">
+                  <Button variant="secondary" size="sm" nativeButton={false} render={<a href={c.urlAssinado} target="_blank" rel="noreferrer" />}>
+                    <Download className="size-4" />
                     Baixar PDF assinado
-                  </a>
+                  </Button>
                 ) : (
                   c.url && (
-                    <a href={c.url} className="text-sm text-primary underline" target="_blank" rel="noreferrer">
+                    <Button variant="secondary" size="sm" nativeButton={false} render={<a href={c.url} target="_blank" rel="noreferrer" />}>
+                      <Download className="size-4" />
                       Baixar
-                    </a>
+                    </Button>
                   )
                 )}
               </div>
