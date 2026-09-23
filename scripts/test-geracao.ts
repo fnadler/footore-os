@@ -15,12 +15,23 @@ import { gerarContratoBuffer, type DadosContrato } from "../src/lib/contratos/ge
 import { montarFeatures } from "../src/lib/contratos/planos";
 import { gerarParcelas } from "../src/lib/contratos/parcelas";
 import { valorFormatadoComExtenso } from "../src/lib/contratos/valorPorExtenso";
+import { TEXTO_MULTA_PADRAO } from "../src/lib/contratos/multa";
 
 const MODELOS_DIR = path.join(process.cwd(), "_docs/contratos-modelo");
+const VALIDACAO_DIR = path.join(process.cwd(), "_validacao");
 
+// Nota geral (não repetida em cada caso antigo): o texto das cláusulas foi
+// atualizado pro padrão atual (linha Scout, set/2026), validado literalmente
+// contra PANTANAL_teste.docx/ELENKO_teste.docx (_validacao/) — ver blocos
+// "confirmado contra PANTANAL_teste/ELENKO_teste" em gerarContrato.ts/multa.ts.
+// GOIAS/ELENKO/BRAGANTINO/CORINTHIANS são contratos reais mais antigos
+// (pré-Scout); podem mostrar divergências de texto adicionais além das já
+// listadas — isso é o efeito pretendido desta atualização, não um bug.
 interface CasoTeste {
   nome: string;
   docxModelo: string;
+  /** Por padrão busca em _docs/contratos-modelo/; passe true pra buscar em _validacao/. */
+  modeloEmValidacao?: boolean;
   dados: DadosContrato;
   // Diferenças esperadas e aceitas (decisões de produto, não bugs) — cada
   // entrada é um trecho que pode aparecer só no modelo real, não no gerado.
@@ -36,6 +47,7 @@ const GOIAS: CasoTeste = {
   docxModelo: "GOIAS_Footlink_Contrato_Essential_Parcelado.docx",
   dados: {
     perfil: "clube",
+    robusta: false,
     cliente: "GOIÁS ESPORTE CLUBE",
     cnpj: "01.665.256/0001-80",
     endereco: "Avenida Edmundo Pinheiro de Abreu, 721, Setor Bela Vista, Goiânia, GO, 74.823-342",
@@ -43,9 +55,10 @@ const GOIAS: CasoTeste = {
     testemunhasContratante: [],
     representantesFooture: [],
     testemunhasFooture: [],
-    plano: "Essential",
+    plano: "Scout Essential",
     api: false,
     pagamento: "parcelado",
+    metodo: "boleto",
     total: montarValorFormatado(24000),
     mensal: montarValorFormatado(2000),
     licAdicional: "R$ 660,00",
@@ -53,7 +66,7 @@ const GOIAS: CasoTeste = {
     primeiroVenc: "10/05/2026",
     vigIni: "01/05/2026",
     vigFim: "30/04/2027",
-    divulga: false,
+    divulgacao: "nenhuma",
     foro: "Porto Alegre - RS",
     multaTexto:
       "O cancelamento antecipado pelo CONTRATANTE, ainda que com aviso prévio de 30 dias, implicará a retenção dos valores já recebidos, acrescido de multa contratual referente à soma dos valores de 03 (três) mensalidades vigentes no momento da rescisão. O cancelamento pela CONTRATADA ensejará restituição proporcional dos meses não usufruídos.",
@@ -69,14 +82,17 @@ const GOIAS: CasoTeste = {
       "próprios — fora do escopo do texto padrão do gerador (mesma categoria das cláusulas opcionais já fora de " +
       "escopo: compliance/não-vínculo/estatuto). Bragantino e Corinthians (também clube) confirmam a versão curta " +
       "como padrão majoritário.",
+    "título/prefixo 'Scout' e redações de PI/suporte/confidencialidade atualizadas pro padrão 2026 (validado contra " +
+      "PANTANAL_teste/ELENKO_teste) — o contrato real do Goiás é anterior a essa atualização.",
   ],
 };
 
 const ELENKO: CasoTeste = {
-  nome: "ELENKO (agente, Pro, parcelado)",
+  nome: "ELENKO (agente, Pro→Prime, parcelado)",
   docxModelo: "ELENKO_Footlink_Contrato_Pro_Parcelado.docx",
   dados: {
     perfil: "agente",
+    robusta: false,
     cliente: "ELENKO SPORTS LTDA",
     cnpj: "21.317.529/0001-03",
     endereco: "Rua Doutor Amâncio de Carvalho, nº 182, conjunto 211, Vila Mariana, São Paulo - SP, CEP 04.012-080",
@@ -87,9 +103,11 @@ const ELENKO: CasoTeste = {
     testemunhasContratante: [],
     representantesFooture: [],
     testemunhasFooture: [],
-    plano: "Pro",
+    // Migration 0010 renomeia Pro -> Prime nos pedidos já existentes.
+    plano: "Scout Prime",
     api: false,
     pagamento: "parcelado",
+    metodo: "boleto",
     total: montarValorFormatado(9240),
     mensal: montarValorFormatado(770),
     licAdicional: "R$ 770,00",
@@ -97,11 +115,11 @@ const ELENKO: CasoTeste = {
     primeiroVenc: "10/09/2026",
     vigIni: "01/09/2026",
     vigFim: "31/08/2027",
-    divulga: false,
+    divulgacao: "nenhuma",
     foro: "Porto Alegre - RS",
     multaTexto:
-      "O cancelamento antecipado pelo CONTRATANTE, ainda que com aviso prévio de 30 dias, implicará a retenção dos valores já recebidos, acrescido de multa contratual referente à soma dos valores de 03 (três) mensalidades vigentes no momento da rescisão. O cancelamento pela CONTRATADA ensejará restituição proporcional dos meses não usufruídos.",
-    features: montarFeatures("agente", "Pro", false, 1, 0),
+      "O cancelamento antecipado do contrato pelo CONTRATANTE, ainda que com aviso prévio de 30 (trinta) dias, implicará a retenção dos valores já recebidos pela CONTRATADA, acrescido de multa contratual referentes à soma dos valores de 03 (três) mensalidades. O cancelamento antecipado por parte da CONTRATADA ensejará a restituição proporcional dos valores recebidos relativos aos meses vincendos eventualmente não usufruídos pelo CONTRATANTE.",
+    features: montarFeatures("agente", "Prime", false, 1, 0),
     parcelas: gerarParcelas("10/09/2026", 12, "calendario"),
     dataGeracao: new Date(2026, 7, 19), // 19/08/2026
   },
@@ -114,6 +132,9 @@ const ELENKO: CasoTeste = {
       "capacidade nova pedida explicitamente (N representantes assináveis, necessária pra Fase 3/Clicksign); o " +
       "contrato real histórico só nomeia representantes no preâmbulo, nunca na assinatura — decisão de produto foi " +
       "estender esse comportamento adiante, não reproduzir o padrão antigo",
+    "título/prefixo 'Scout' (era 'Pro' sem prefixo) e redações de PI/suporte/confidencialidade atualizadas pro " +
+      "padrão 2026 (validado contra PANTANAL_teste/ELENKO_teste) — o contrato real da Elenko é anterior a essa " +
+      "atualização.",
   ],
 };
 
@@ -122,6 +143,7 @@ const BRAGANTINO: CasoTeste = {
   docxModelo: "BRAGANTINO_Footlink_Contrato_Elite_AVista.docx",
   dados: {
     perfil: "clube",
+    robusta: false,
     cliente: "RED BULL BRAGANTINO FUTEBOL LTDA",
     cnpj: "51.315.976/0001-94",
     endereco: "Rua Emilio Colella, S/N, Bairro Jardim Nova Bragança, Bragança Paulista/SP, CEP 12914-410",
@@ -129,7 +151,7 @@ const BRAGANTINO: CasoTeste = {
     testemunhasContratante: [],
     representantesFooture: [],
     testemunhasFooture: [],
-    plano: "Elite",
+    plano: "Scout Elite",
     api: false,
     pagamento: "avista",
     total: montarValorFormatado(49896),
@@ -138,7 +160,7 @@ const BRAGANTINO: CasoTeste = {
     vencAvista: "30 (trinta) dias corridos contados a partir da data de envio do boleto bancário à CONTRATANTE",
     vigIni: "01/01/2026",
     vigFim: "31/12/2026",
-    divulga: true,
+    divulgacao: "simples",
     foro: "Porto Alegre - RS",
     multaTexto:
       "O cancelamento antecipado pela CONTRATANTE implicará a retenção dos valores já recebidos pela CONTRATADA a título de multa contratual. O cancelamento antecipado por parte da CONTRATADA ensejará a restituição proporcional dos valores recebidos relativos aos meses vincendos não usufruídos pela CONTRATANTE.",
@@ -146,7 +168,10 @@ const BRAGANTINO: CasoTeste = {
     parcelas: [],
     dataGeracao: new Date(2025, 11, 30), // 30/12/2025
   },
-  divergenciasAceitas: [],
+  divergenciasAceitas: [
+    "título/prefixo 'Scout' e redações de PI/suporte/confidencialidade atualizadas pro padrão 2026 (validado contra " +
+      "PANTANAL_teste/ELENKO_teste) — o contrato real do Bragantino é anterior a essa atualização.",
+  ],
 };
 
 const CORINTHIANS: CasoTeste = {
@@ -154,6 +179,8 @@ const CORINTHIANS: CasoTeste = {
   docxModelo: "CORINTHIANS_Footlink_Contrato_Elite_API.docx",
   dados: {
     perfil: "clube",
+    // Único caso com robusta:true — "foi específica de São Paulo e Corinthians" (clausulas.md).
+    robusta: true,
     cliente: "SPORT CLUB CORINTHIANS PAULISTA",
     cnpj: "61.902.722/0001-26",
     endereco: "Rua São Jorge, 777, Parque São Jorge, Tatuapé, São Paulo/SP, CEP 03087-000",
@@ -161,9 +188,11 @@ const CORINTHIANS: CasoTeste = {
     testemunhasContratante: [],
     representantesFooture: [],
     testemunhasFooture: [],
-    plano: "Elite",
+    plano: "Scout Elite",
     api: true,
+    apiModelo: "distintos",
     pagamento: "parcelado",
+    metodo: "boleto",
     total: montarValorFormatado(34152.36),
     mensal: montarValorFormatado(2846.03),
     mensalApi: montarValorFormatado(450),
@@ -173,7 +202,7 @@ const CORINTHIANS: CasoTeste = {
     primeiroVenc: "10/05/2026",
     vigIni: "10/05/2026",
     vigFim: "09/05/2027",
-    divulga: true,
+    divulgacao: "simples",
     foro: "São Paulo - SP",
     multaTexto:
       "O presente Contrato poderá ser resilido imotivadamente pelas Partes, a qualquer tempo, mediante aviso prévio de 30 (trinta) dias, sendo que a falta do aviso implicará multa equivalente a 02 (dois) meses da prestação dos serviços.",
@@ -183,10 +212,93 @@ const CORINTHIANS: CasoTeste = {
   },
   divergenciasAceitas: [
     "'Porto Alegre' vs 'São Paulo' na linha de fechamento — decisão de produto (local sempre fixo Porto Alegre/RS), não bug",
+    "título/prefixo 'Scout' atualizado pro padrão 2026 — o contrato real do Corinthians é anterior a essa atualização.",
   ],
 };
 
-const CASOS = [GOIAS, ELENKO, BRAGANTINO, CORINTHIANS];
+// Casos novos — gate real das regras Scout/robusta/divulgação/PIX/features
+// agrupadas (validados literalmente contra _validacao/*.docx).
+const PANTANAL: CasoTeste = {
+  nome: "PANTANAL (clube, Scout Basic, PIX)",
+  docxModelo: "PANTANAL_teste.docx",
+  modeloEmValidacao: true,
+  dados: {
+    perfil: "clube",
+    robusta: false,
+    cliente: "FUTEBOL CLUBE PANTANAL SAF",
+    cnpj: "57.823.430/0001-20",
+    endereco: "Rua Vinte e Cinco de Dezembro, 48, Centro, Campo Grande, MS, CEP: 79.002-061",
+    representantesContratante: [],
+    testemunhasContratante: [],
+    representantesFooture: [],
+    testemunhasFooture: [],
+    plano: "Scout Basic",
+    api: false,
+    pagamento: "parcelado",
+    metodo: "pix",
+    total: montarValorFormatado(6600),
+    mensal: montarValorFormatado(550),
+    licAdicional: "R$ 550,00",
+    diaVenc: "25",
+    primeiroVenc: "25/08/2026",
+    vigIni: "25/08/2026",
+    vigFim: "24/08/2027",
+    divulgacao: "simples",
+    foro: "Porto Alegre - RS",
+    multaTexto: TEXTO_MULTA_PADRAO.tres_mensalidades,
+    features: montarFeatures("clube", "Basic", false, 1, 0),
+    parcelas: gerarParcelas("25/08/2026", 12, "ciclo"),
+    dataGeracao: new Date(2026, 2, 20), // 20/03/2026
+  },
+  divergenciasAceitas: [],
+};
+
+const ELENKO_TESTE: CasoTeste = {
+  nome: "ELENKO_TESTE (agente, Scout Prime, boleto)",
+  docxModelo: "ELENKO_teste.docx",
+  modeloEmValidacao: true,
+  dados: {
+    perfil: "agente",
+    robusta: false,
+    cliente: "ELENKO SPORTS LTDA",
+    cnpj: "21.317.529/0001-03",
+    endereco: "Rua Doutor Amâncio de Carvalho, 182, cj 211, Vila Mariana, São Paulo, SP, CEP 04012-080",
+    representantesContratante: [
+      { nomeCompleto: "Luis Fernando Menezes Garcia", cpf: "003.482.238-03", email: "" },
+      { nomeCompleto: "Guilherme de Miranda Gonçalves", cpf: "223.688.678-05", email: "" },
+    ],
+    testemunhasContratante: [],
+    representantesFooture: [],
+    testemunhasFooture: [],
+    plano: "Scout Prime",
+    api: false,
+    pagamento: "parcelado",
+    metodo: "boleto",
+    total: montarValorFormatado(9240),
+    mensal: montarValorFormatado(770),
+    licAdicional: "R$ 770,00",
+    diaVenc: "10",
+    primeiroVenc: "10/09/2026",
+    vigIni: "01/09/2026",
+    vigFim: "31/08/2027",
+    divulgacao: "nenhuma",
+    foro: "Porto Alegre - RS",
+    multaTexto: TEXTO_MULTA_PADRAO.tres_mensalidades,
+    features: montarFeatures("agente", "Prime", false, 1, 0),
+    parcelas: gerarParcelas("10/09/2026", 12, "calendario"),
+    dataGeracao: new Date(2026, 7, 19), // 19/08/2026
+  },
+  divergenciasAceitas: [
+    "texto de preâmbulo 'por {nome1}, CPF nº ...' vs 'por seus sócios {nome1} e {nome2}' — script usa formato " +
+      "genérico, não 'sócios' (mesma decisão de produto do caso ELENKO antigo)",
+    "valor por extenso de R$ 9.240,00 no real omite a vírgula antes de 'duzentos e quarenta' (mesma inconsistência " +
+      "do documento original observada no caso ELENKO antigo); o gerador segue a convenção gramatical padrão com vírgula",
+    "bloco de assinatura mostra o nome dos 2 representantes cadastrados em vez de só 'ELENKO SPORTS LTDA' — " +
+      "capacidade nova pedida explicitamente (N representantes assináveis, necessária pra Fase 3/Clicksign)",
+  ],
+};
+
+const CASOS = [GOIAS, ELENKO, BRAGANTINO, CORINTHIANS, PANTANAL, ELENKO_TESTE];
 
 function normalizar(texto: string): string[] {
   return texto
@@ -195,8 +307,8 @@ function normalizar(texto: string): string[] {
     .filter(Boolean);
 }
 
-async function extrairTextoModelo(nomeArquivo: string): Promise<string[]> {
-  const caminho = path.join(MODELOS_DIR, nomeArquivo);
+async function extrairTextoModelo(nomeArquivo: string, emValidacao?: boolean): Promise<string[]> {
+  const caminho = path.join(emValidacao ? VALIDACAO_DIR : MODELOS_DIR, nomeArquivo);
   const { value } = await mammoth.extractRawText({ buffer: readFileSync(caminho) });
   return normalizar(value);
 }
@@ -210,7 +322,7 @@ async function extrairTextoGerado(dados: DadosContrato): Promise<string[]> {
 async function rodarCaso(caso: CasoTeste) {
   console.log(`\n=== ${caso.nome} ===`);
   const [linhasModelo, linhasGerado] = await Promise.all([
-    extrairTextoModelo(caso.docxModelo),
+    extrairTextoModelo(caso.docxModelo, caso.modeloEmValidacao),
     extrairTextoGerado(caso.dados),
   ]);
 

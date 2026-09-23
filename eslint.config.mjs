@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Material de referência da skill, não é código do app (ver LEIA-ME.md).
     "_docs/**",
+    "_skill/**",
+    "_validacao/**",
   ]),
 ]);
 
