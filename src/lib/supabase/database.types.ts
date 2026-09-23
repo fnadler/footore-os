@@ -19,6 +19,8 @@ export type FormaPagamento = "avista" | "parcelado";
 export type ConvencaoParcelas = "calendario" | "ciclo";
 export type MeioPagamento = "boleto" | "pix" | "transferencia_bancaria" | "cartao_credito" | "cartao_debito";
 export type TipoSignatario = "representante_legal" | "testemunha";
+export type Divulgacao = "nenhuma" | "simples" | "obrigacao";
+export type ApiModelo = "combinado" | "distintos";
 export type MultaTipo =
   | "sem_multa"
   | "duas_mensalidades"
@@ -134,7 +136,11 @@ export interface Database {
           convencao_parcelas: ConvencaoParcelas;
           vigencia_inicio: string;
           vigencia_fim: string;
-          divulga_parceria: boolean;
+          robusta: boolean;
+          divulgacao: Divulgacao;
+          percentual_desconto_divulgacao: number | null;
+          post_divulgacao: string | null;
+          api_modelo: ApiModelo | null;
           multa_tipo: MultaTipo;
           multa_texto: string;
           foro: string;
@@ -169,7 +175,11 @@ export interface Database {
           convencao_parcelas?: ConvencaoParcelas;
           vigencia_inicio: string;
           vigencia_fim: string;
-          divulga_parceria?: boolean;
+          robusta?: boolean;
+          divulgacao?: Divulgacao;
+          percentual_desconto_divulgacao?: number | null;
+          post_divulgacao?: string | null;
+          api_modelo?: ApiModelo | null;
           multa_tipo?: MultaTipo;
           multa_texto: string;
           foro?: string;
@@ -201,7 +211,11 @@ export interface Database {
           convencao_parcelas: ConvencaoParcelas;
           vigencia_inicio: string;
           vigencia_fim: string;
-          divulga_parceria: boolean;
+          robusta: boolean;
+          divulgacao: Divulgacao;
+          percentual_desconto_divulgacao: number | null;
+          post_divulgacao: string | null;
+          api_modelo: ApiModelo | null;
           multa_tipo: MultaTipo;
           multa_texto: string;
           foro: string;

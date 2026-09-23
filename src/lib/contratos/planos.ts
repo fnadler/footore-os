@@ -1,28 +1,41 @@
 // Fonte da Cláusula Sexta (DO PREÇO E DAS LICENÇAS) — rótulos × valores por plano.
 //
-// NÃO é um porte direto de _docs/referencia-skill/references/{features,planos}.md.
-// Esses dois arquivos divergem entre si para AGENTE (planos.md tem uma linha
-// "Análise de Mercado" que não existe em contrato nenhum, e não lista as linhas
-// "Número de Atletas"/"Atletas Agenciados"/"Agências" que features.md tem) — os
-// dados abaixo foram reconciliados contra o texto real extraído dos 4
-// contratos-modelo em _docs/contratos-modelo/*.docx (ver scripts/test-geracao.ts
-// para a verificação de fidelidade). Onde um valor não pôde ser confirmado num
-// contrato real (só temos Pro assinado para agente), está marcado como
-// ASSUMIDO — revisar antes de gerar contrato de verdade nesses planos.
+// Reconciliado contra `_skill/references/{features,planos}.md` (pacote de referência
+// "footlink-contract", linha Scout — set/2026). O prefixo "Scout" impresso no contrato
+// (ex.: "PLANO FOOTLINK SCOUT ESSENTIAL") é aplicado só na montagem dos dados do
+// gerador (ver `rotuloScoutPlano`), não é armazenado em `pedidos.plano`.
+//
+// FEATURES_CLUBE já era fiel aos 4 contratos-modelo reais (GOIAS/BRAGANTINO)
+// verificados na Fase 1 — os rótulos e tiers não mudaram na atualização Scout.
+// FEATURES_AGENTE foi REESTRUTURADA: a matriz técnica antiga (Single/Starter/
+// Growth/Pro/Prime, lista plana) foi substituída pelo descritivo agrupado em 4
+// seções (Capacidade/Minha Agência/Base de Atletas/Mercado) do pacote novo —
+// os tiers antigos Starter/Growth/Pro não existem mais (ver `legado.ts` pro
+// mapeamento de nomenclatura antiga).
 
 import { inteiroPorExtenso } from "./valorPorExtenso";
 
 export type PlanoClube = "Starter" | "Basic" | "Essential" | "Elite" | "Multi-Club";
-export type PlanoAgente = "Single" | "Starter" | "Growth" | "Pro" | "Prime";
+export type PlanoAgente = "Single" | "Basic" | "Essential" | "Prime" | "Elite";
 
 export const PLANOS_CLUBE: PlanoClube[] = ["Starter", "Basic", "Essential", "Elite", "Multi-Club"];
-export const PLANOS_AGENTE: PlanoAgente[] = ["Single", "Starter", "Growth", "Pro", "Prime"];
+export const PLANOS_AGENTE: PlanoAgente[] = ["Single", "Basic", "Essential", "Prime", "Elite"];
+
+/** "Scout <Plano>" — só usado ao montar o contrato, nunca armazenado em `pedidos.plano`. */
+export function rotuloScoutPlano(plano: string): string {
+  return `Scout ${plano}`;
+}
 
 interface FeatureRow<P extends string> {
   /** Texto literal da coluna esquerda — não reescrever (references/features.md). */
   label: string;
   valores: Record<P, string>;
 }
+
+/** Linha de seção (subcabeçalho ocupando as duas colunas da tabela) — convenção
+ * do gerador: `['#', 'NOME DA SEÇÃO']` em vez de um par [rótulo, valor] normal. */
+type LinhaFeature = [string, string];
+const SECAO = (nome: string): LinhaFeature => ["#", nome];
 
 // Confirmado contra GOIAS (Essential) e BRAGANTINO (Elite, "Ilimitado" nas 4
 // linhas de limite). Basic/Starter/Multi-Club vêm de planos.md sem contrato
@@ -57,14 +70,16 @@ export const FEATURES_CLUBE: FeatureRow<PlanoClube>[] = [
   },
   {
     label: "Projetos (organização do workflow de análise de mercado com geração de relatórios em formato de time sombra)",
-    valores: { Starter: "Não", Basic: "5", Essential: "até 10", Elite: "Ilimitado", "Multi-Club": "Ilimitado" },
+    // Basic confirmado contra PANTANAL_teste.docx ("até 05") — antes ASSUMIDO como "5".
+    valores: { Starter: "Não", Basic: "até 05", Essential: "até 10", Elite: "Ilimitado", "Multi-Club": "Ilimitado" },
   },
   {
     label:
       "Monitoramento (registro dos atletas monitorados para recebimento de atualizações, organizar em listas e registrar informações)",
+    // Basic confirmado contra PANTANAL_teste.docx ("até 500", minúsculo) — antes ASSUMIDO como "Até 500".
     valores: {
       Starter: "Até 200",
-      Basic: "Até 500",
+      Basic: "até 500",
       Essential: "até 1.000",
       Elite: "Ilimitado",
       "Multi-Club": "Ilimitado",
@@ -72,12 +87,14 @@ export const FEATURES_CLUBE: FeatureRow<PlanoClube>[] = [
   },
   {
     label: "Avaliações (registro de avaliações de atletas na plataforma, com relatórios em lista e gráficos)",
-    valores: { Starter: "Não", Basic: "Até 1.000", Essential: "até 2.000", Elite: "Ilimitado", "Multi-Club": "Ilimitado" },
+    // Basic confirmado contra PANTANAL_teste.docx ("até 1.000", minúsculo) — antes ASSUMIDO como "Até 1.000".
+    valores: { Starter: "Não", Basic: "até 1.000", Essential: "até 2.000", Elite: "Ilimitado", "Multi-Club": "Ilimitado" },
   },
   {
     label:
       "Mercado de Transferências (anunciar atletas sem contrato e visualizar necessidades dos clubes, podendo oferecer atletas e gerenciar negociações)",
-    valores: { Starter: "Até 5", Basic: "Até 10", Essential: "até 20", Elite: "Ilimitado", "Multi-Club": "Ilimitado" },
+    // Basic confirmado contra PANTANAL_teste.docx ("até 10", minúsculo) — antes ASSUMIDO como "Até 10".
+    valores: { Starter: "Até 5", Basic: "até 10", Essential: "até 20", Elite: "Ilimitado", "Multi-Club": "Ilimitado" },
   },
   {
     // Confirmado GOIAS/BRAGANTINO: texto de clube é mais longo que o de agente.
@@ -96,99 +113,59 @@ export const FEATURES_CLUBE: FeatureRow<PlanoClube>[] = [
   },
 ];
 
-// Confirmado contra ELENKO (Pro) — 15 linhas reais, não as 13 de planos.md.
-// "Atletas Agenciados" e "Agências" só têm o valor Pro ("Sim") confirmado;
-// os demais planos foram assumidos como "Sim" por analogia com o padrão
-// uniforme da linha "Agências" em clube (ver nota do módulo). "Análise de
-// Mercado" (planos.md) foi removida — não existe no contrato real.
-export const FEATURES_AGENTE: FeatureRow<PlanoAgente>[] = [
+// Descritivo agrupado (set/2026), substitui a matriz técnica antiga (Elenko/TFA,
+// ~30 linhas S/N) — ver _skill/references/{features,planos}.md. Sem contrato
+// real ainda gerado sob essa estrutura pra conferir linha a linha (o gabarito
+// de validação `_validacao/ELENKO_teste.docx` é a primeira conferência real).
+export const FEATURES_AGENTE: LinhaFeature[] = [
+  SECAO("CAPACIDADE"),
+  ["Atletas agenciados", ""],
+  ["Monitoramento de atletas", ""],
+  ["Projetos com time sombra", ""],
+  ["Avaliações de atletas", ""],
+  ["Anúncios simultâneos de atletas sem contrato", ""],
+  SECAO("MINHA AGÊNCIA"),
+  ["Gestão da carteira e análise de minutagem", ""],
+  ["Gestão de contratos", ""],
+  ["Workflow de gestão de mercado", ""],
+  SECAO("BASE DE ATLETAS"),
+  ["Busca na base completa", ""],
+  ["Modalidades e categorias", ""],
+  ["Perfil, desempenho, contratos, avaliações e relatórios", ""],
+  ["Competições de base brasileiras", ""],
+  ["Análise de mercado", ""],
+  SECAO("MERCADO"),
+  ["Mercado de transferências e janelas", ""],
+  ["Ver perfis de atletas desejados pelos clubes", ""],
+  ["Footlink Originals", ""],
+];
+
+// Valores por tier de cada linha de FEATURES_AGENTE (na mesma ordem, pulando
+// as linhas de seção) — separado da lista acima só por legibilidade da tabela
+// fonte em planos.md; `montarFeatures` combina os dois na montagem.
+const VALORES_FEATURES_AGENTE: Record<PlanoAgente, string>[] = [
+  { Single: "1", Basic: "10", Essential: "30", Prime: "100", Elite: "Ilimitado" },
+  { Single: "Não incluído", Basic: "50", Essential: "200", Prime: "500", Elite: "Ilimitado" },
+  { Single: "Não incluído", Basic: "Não incluído", Essential: "1", Prime: "3", Elite: "Ilimitado" },
+  { Single: "Não incluído", Basic: "Não incluído", Essential: "200", Prime: "1.000", Elite: "Ilimitado" },
+  { Single: "Só o seu agenciado", Basic: "2", Essential: "5", Prime: "10", Elite: "Ilimitado" },
+  { Single: "Não incluído", Basic: "Não incluído", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Não incluído", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Não incluído", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Sim", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Masculino ou feminino", Essential: "Todas", Prime: "Todas", Elite: "Todas" },
   {
-    label: "Número de Atletas",
-    valores: { Single: "1", Starter: "Até 10", Growth: "Até 30", Pro: "Até 100", Prime: "Ilimitado" },
+    Single: "Só o seu agenciado",
+    Basic: "Toda a base",
+    Essential: "Toda a base",
+    Prime: "Toda a base",
+    Elite: "Toda a base",
   },
-  {
-    label: "Atletas Agenciados (o nome e o contato por mensagem da agência fica vinculado ao perfil do atleta na plataforma)",
-    valores: { Single: "Sim", Starter: "Sim", Growth: "Sim", Pro: "Sim", Prime: "Sim" }, // ASSUMIDO exceto Pro
-  },
-  {
-    label:
-      "Minha Agência (com gestão de agenciados, perfil com minutagem por idade, gestão de contratos, gestão de mercado)",
-    valores: { Single: "Não", Starter: "Não", Growth: "Sim", Pro: "Sim", Prime: "Sim" },
-  },
-  {
-    label: "Meu Feed (com alertas de registro no BID e FootNews)",
-    valores: { Single: "Sim", Starter: "Sim", Growth: "Sim", Pro: "Sim", Prime: "Sim" },
-  },
-  {
-    label: "Footlink Originals (conteúdo em vídeo com análise de mercados internacionais)",
-    valores: { Single: "Não", Starter: "Sim", Growth: "Sim", Pro: "Sim", Prime: "Sim" },
-  },
-  {
-    label:
-      "Busca de Atletas (acesso a base de dados com aproximadamente 600 mil atletas, masculino e feminino, desde os 7 anos de idade)",
-    valores: {
-      Single: "Não",
-      Starter: "Somente Masc. ou Fem.",
-      Growth: "Sim",
-      Pro: "Sim",
-      Prime: "Sim",
-    },
-  },
-  {
-    label:
-      "Perfil de Atletas (visualização de dados de contrato, carreira, desempenho, jogos com recursos para geração de relatórios e anotações sobre o atleta. Para atletas agenciados, pode publicar vídeos e relatórios para qualificar apresentação do atleta)",
-    valores: {
-      Single: "Somente do seu agenciado",
-      Starter: "Sim",
-      Growth: "Sim",
-      Pro: "Sim",
-      Prime: "Sim",
-    },
-  },
-  {
-    label:
-      "Competições (visualizações de dados de competições, com o maior acervo de dados de competições de base organizadas por federações e CBF)",
-    valores: { Single: "Não", Starter: "Sim", Growth: "Sim", Pro: "Sim", Prime: "Sim" },
-  },
-  {
-    label: "Projetos (organização do workflow de análise de mercado com geração de relatórios em formato de time sombra)",
-    valores: { Single: "Não", Starter: "Não", Growth: "1", Pro: "3", Prime: "Ilimitado" },
-  },
-  {
-    label:
-      "Monitoramento (registro dos atletas monitorados para recebimento de atualizações, organizar em listas e registrar informações)",
-    valores: { Single: "Não", Starter: "Até 50", Growth: "200", Pro: "500", Prime: "Ilimitado" },
-  },
-  {
-    label: "Avaliações (registro de avaliações de atletas na plataforma, com relatórios em lista e gráficos)",
-    valores: { Single: "Não", Starter: "Não", Growth: "200", Pro: "1.000", Prime: "Ilimitado" },
-  },
-  {
-    label:
-      "Mercado de Transferências (anunciar atletas sem contrato e visualizar necessidades dos clubes, podendo oferecer atletas e gerenciar negociações)",
-    valores: {
-      Single: "Somente seu agenciado",
-      Starter: "Até 2 anúncios",
-      Growth: "Até 5 anúncios",
-      Pro: "Até 10",
-      Prime: "Ilimitado",
-    },
-  },
-  {
-    // Confirmado ELENKO: texto de agente é mais curto que o de clube.
-    label: "Chat Integrado (ferramenta de comunicação com clubes e agentes)",
-    valores: {
-      Single: "Recebe e envia",
-      Starter: "Recebe e envia",
-      Growth: "Recebe e envia",
-      Pro: "Recebe e envia",
-      Prime: "Recebe e envia",
-    },
-  },
-  {
-    label: "Agências Listagem de agentes clientes do Footlink com seus atletas agenciados",
-    valores: { Single: "Sim", Starter: "Sim", Growth: "Sim", Pro: "Sim", Prime: "Sim" }, // ASSUMIDO exceto Pro
-  },
+  { Single: "Não incluído", Basic: "Sim", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Sim", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Sim", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Não incluído", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
+  { Single: "Não incluído", Basic: "Sim", Essential: "Sim", Prime: "Sim", Elite: "Sim" },
 ];
 
 // Linha extra da Cláusula Sexta quando o produto inclui API — confirmado
@@ -198,20 +175,6 @@ export const FEATURE_API = {
   label:
     "Acesso à API do Footlink (Competições; Atletas monitorados; Atletas inseridos pela organização; Avaliações; Relatórios; Projetos)",
   valor: "Sim",
-};
-
-// Preço de licença adicional — só referência para a UI (o valor real do
-// contrato SEMPRE vem do pedido de venda, nunca destas tabelas cheias).
-export const PRECO_LICENCA_ADICIONAL_REFERENCIA: Record<PlanoClube | PlanoAgente, string> = {
-  Starter: "R$ 365,00 (clube) / R$ 350,00 (agente) — varia por perfil",
-  Basic: "R$ 575,00",
-  Essential: "R$ 730,00 (1 licença) / R$ 630,00 (combo 3)",
-  Elite: "R$ 330,00 (10) / R$ 300,00 (20) / R$ 275,00 (30)",
-  "Multi-Club": "R$ 600,00 / R$ 500,00",
-  Single: "R$ 300,00",
-  Growth: "R$ 600,00 / R$ 550,00",
-  Pro: "R$ 700,00 / R$ 650,00 / R$ 550,00",
-  Prime: "R$ 750,00 / R$ 700,00 / R$ 650,00",
 };
 
 // "um"/"dois" -> "uma"/"duas" (licença é substantivo feminino). Confirmado
@@ -245,7 +208,6 @@ export function montarFeatures(
   licencasGratuitas: number,
   rotuloGratuita?: string,
 ): Array<[string, string]> {
-  const linhas = perfil === "clube" ? FEATURES_CLUBE : FEATURES_AGENTE;
   const planoValido = (perfil === "clube" ? PLANOS_CLUBE : PLANOS_AGENTE).includes(plano as never);
   if (!planoValido) {
     throw new Error(`Plano "${plano}" inválido para perfil "${perfil}".`);
@@ -255,8 +217,23 @@ export function montarFeatures(
     ["Licenças Contempladas no Plano", montarLinhaLicencas(licencasPagas, licencasGratuitas, rotuloGratuita)],
   ];
   if (incluiApi) resultado.push([FEATURE_API.label, FEATURE_API.valor]);
-  for (const linha of linhas) {
-    resultado.push([linha.label, (linha.valores as Record<string, string>)[plano]]);
+
+  if (perfil === "clube") {
+    for (const linha of FEATURES_CLUBE) {
+      resultado.push([linha.label, (linha.valores as Record<string, string>)[plano]]);
+    }
+  } else {
+    let indiceValor = 0;
+    for (const [label, secao] of FEATURES_AGENTE) {
+      if (label === "#") {
+        resultado.push(["#", secao]);
+        continue;
+      }
+      const valores = VALORES_FEATURES_AGENTE[indiceValor];
+      indiceValor += 1;
+      resultado.push([label, (valores as Record<string, string>)[plano]]);
+    }
   }
+
   return resultado;
 }
