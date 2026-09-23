@@ -225,7 +225,30 @@ export async function enviarParaAssinatura(supabase: Supa, contrato: ContratoPar
     body: { data: { type: "notifications", attributes: {} } },
   });
 
-  await supabase.from("contratos").update({ clicksign_envelope_id: envelopeId }).eq("id", contrato.contratoId);
+  // O webhook (document_closed) manda de volta o id do `document`, não o do
+  // `envelope` — são recursos diferentes na v3 — por isso guardamos os dois.
+  await supabase
+    .from("contratos")
+    .update({ clicksign_envelope_id: envelopeId, clicksign_document_id: documentId })
+    .eq("id", contrato.contratoId);
 
   return { envelopeId };
+}
+
+/** Usado pelo webhook: busca o link do PDF assinado direto no recurso `document`
+ * (mais confiável do que confiar no formato do payload do webhook em si, que
+ * segue a nomenclatura da API clássica e pode não bater 1:1 com a v3). */
+export async function buscarArquivoAssinado(envelopeId: string, documentId: string): Promise<Buffer | null> {
+  const documento = await clicksign<{ data: { links?: { files?: { signed?: string } } } }>(
+    `/envelopes/${envelopeId}/documents/${documentId}`,
+    { method: "GET" },
+  );
+  const urlAssinado = documento.data.links?.files?.signed;
+  if (!urlAssinado) return null;
+
+  // URL pré-assinada da AWS S3 — não manda o header Authorization da Clicksign
+  // aqui, a assinatura da própria URL já cuida da autenticação/expiração.
+  const resposta = await fetch(urlAssinado);
+  if (!resposta.ok) return null;
+  return Buffer.from(await resposta.arrayBuffer());
 }

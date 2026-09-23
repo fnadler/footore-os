@@ -4,13 +4,14 @@
 // Só o evento `document_closed` (todos assinaram) importa aqui: baixa o PDF
 // assinado, guarda no Storage e move ENVIADO_PARA_ASSINATURA -> ASSINADO.
 //
-// `document.key` no payload é o mesmo id que chamamos de `clicksign_envelope_id`
-// — a Clicksign usa nomenclatura da API clássica (pré-v3) no webhook, mas os
-// campos (auto_close, locale, remind_interval, block_after_refusal) batem
-// exatamente com o que mandamos em POST /envelopes.
+// `document.key` no payload é o id do recurso `document` da v3 (POST
+// /envelopes/:id/documents) — testado contra o sandbox real: NÃO é o id do
+// `envelope` (são recursos diferentes; a suposição inicial de que seriam o
+// mesmo valor, por causa da nomenclatura da API clássica, estava errada).
 import { NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
+import { buscarArquivoAssinado } from "@/lib/integracoes/clicksign";
 
 function assinaturaValida(corpoBruto: string, cabecalho: string | null): boolean {
   const secret = process.env.CLICKSIGN_WEBHOOK_SECRET;
@@ -36,9 +37,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: "evento ignorado" }, { status: 200 });
   }
 
-  const documento = payload.document;
-  const envelopeId: string | undefined = documento?.key;
-  if (!envelopeId) {
+  const documentId: string | undefined = payload.document?.key;
+  if (!documentId) {
     return NextResponse.json({ error: "document.key ausente no payload." }, { status: 400 });
   }
 
@@ -46,14 +46,14 @@ export async function POST(request: Request) {
 
   const { data: contrato } = await supabase
     .from("contratos")
-    .select("id, pedido_id, versao")
-    .eq("clicksign_envelope_id", envelopeId)
+    .select("id, pedido_id, versao, clicksign_envelope_id")
+    .eq("clicksign_document_id", documentId)
     .single();
 
-  // Envelope que não reconhecemos (ex.: sobra de teste manual) — ignora sem erro,
+  // Document que não reconhecemos (ex.: sobra de teste manual) — ignora sem erro,
   // não é motivo pra Clicksign ficar retentando a entrega.
-  if (!contrato) {
-    return NextResponse.json({ status: "envelope não reconhecido, ignorado" }, { status: 200 });
+  if (!contrato || !contrato.clicksign_envelope_id) {
+    return NextResponse.json({ status: "documento não reconhecido, ignorado" }, { status: 200 });
   }
 
   const { data: pedido } = await supabase.from("pedidos").select("status").eq("id", contrato.pedido_id).single();
@@ -61,27 +61,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: "já processado" }, { status: 200 });
   }
 
-  const urlAssinado: string | undefined = documento?.downloads?.signed_file_url;
-  if (urlAssinado) {
-    try {
-      const respostaArquivo = await fetch(`${process.env.CLICKSIGN_API_URL}${urlAssinado}`, {
-        headers: { Authorization: process.env.CLICKSIGN_ACCESS_TOKEN! },
-      });
-      if (respostaArquivo.ok) {
-        const bufferAssinado = Buffer.from(await respostaArquivo.arrayBuffer());
-        const pathAssinado = `${contrato.pedido_id}/v${contrato.versao}-assinado.pdf`;
-        await supabase.storage
-          .from("contratos")
-          .upload(pathAssinado, bufferAssinado, { contentType: "application/pdf", upsert: true });
-        await supabase.from("contratos").update({ arquivo_assinado_path: pathAssinado }).eq("id", contrato.id);
-      } else {
-        console.error(`[webhook clicksign] falha ao baixar arquivo assinado (${respostaArquivo.status}), seguindo sem arquivar.`);
-      }
-    } catch (erro) {
-      // Não trava a transição de status por causa de um problema secundário
-      // de arquivamento — o mesmo padrão usado no stub do Bling em acoes.ts.
-      console.error("[webhook clicksign] erro ao baixar/guardar arquivo assinado:", erro);
+  try {
+    const bufferAssinado = await buscarArquivoAssinado(contrato.clicksign_envelope_id, documentId);
+    if (bufferAssinado) {
+      const pathAssinado = `${contrato.pedido_id}/v${contrato.versao}-assinado.pdf`;
+      await supabase.storage
+        .from("contratos")
+        .upload(pathAssinado, bufferAssinado, { contentType: "application/pdf", upsert: true });
+      await supabase.from("contratos").update({ arquivo_assinado_path: pathAssinado }).eq("id", contrato.id);
+    } else {
+      console.error("[webhook clicksign] documento fechado sem link de arquivo assinado, seguindo sem arquivar.");
     }
+  } catch (erro) {
+    // Não trava a transição de status por causa de um problema secundário de
+    // arquivamento — o mesmo padrão usado no stub do Bling em acoes.ts.
+    console.error("[webhook clicksign] erro ao baixar/guardar arquivo assinado:", erro);
   }
 
   const { error: erroTransicao } = await supabase.rpc("registrar_transicao", {
