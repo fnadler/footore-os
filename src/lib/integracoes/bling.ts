@@ -2,6 +2,7 @@
 // Bling ainda. Mapeamento de campos esboçado; implementar OAuth 2.0 +
 // POST /pedidos/vendas quando a Fase 2 começar (developer.bling.com.br).
 import type { Database } from "@/lib/supabase/database.types";
+import { buscarPlanoPorKey } from "@/lib/plans/normalize";
 
 type PedidoRow = Database["public"]["Tables"]["pedidos"]["Row"];
 
@@ -22,7 +23,7 @@ export function montarPayloadBling(pedido: PedidoRow): PedidoVendaBling {
     data: pedido.criado_em.slice(0, 10),
     itens: [
       {
-        descricao: `Assinatura Footlink — Plano ${pedido.plano}`,
+        descricao: `Assinatura Footlink — Plano ${buscarPlanoPorKey(pedido.plano)?.canonical ?? pedido.plano}`,
         quantidade: pedido.licencas_pagas,
         valor: pedido.valor_mensal,
       },

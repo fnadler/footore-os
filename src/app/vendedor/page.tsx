@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { listarPedidosDoVendedor } from "@/lib/pedidos/consultas";
 import { pedidoEhEditavel } from "@/lib/pedidos/statusEditavel";
 import { urlLogoCliente } from "@/lib/clientes/consultas";
+import { buscarPlanoPorKey } from "@/lib/plans/normalize";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +50,7 @@ export default async function VendedorPage() {
                     <Badge variant="outline" className="capitalize">
                       {p.perfil}
                     </Badge>{" "}
-                    {p.plano}
+                    {buscarPlanoPorKey(p.plano)?.canonical ?? p.plano}
                   </TableCell>
                   <TableCell>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.valor_total)}</TableCell>
                   <TableCell>

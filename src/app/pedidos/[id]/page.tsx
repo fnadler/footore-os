@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { urlLogoCliente } from "@/lib/clientes/consultas";
 import { LogoCliente } from "@/components/clientes/logo-cliente";
 import { gerarAlertas } from "@/lib/validacoes/pedido";
-import { detectarPlanoLegado } from "@/lib/contratos/legado";
+import { buscarPlanoPorKey } from "@/lib/plans/normalize";
 import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
 import { RotuloStatus, ROTULO_STATUS } from "@/components/rotulo-status";
 import { PainelAlertas } from "@/components/pedido/painel-alertas";
@@ -53,12 +53,12 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
   } | null;
   const logoClienteUrl = urlLogoCliente(supabase, cliente?.logo_path ?? null);
   const vendedorNome = (pedido.profiles as unknown as { nome: string } | null)?.nome;
+  const planoLabel = buscarPlanoPorKey(pedido.plano)?.canonical ?? pedido.plano;
 
   const representantesLegais = signatarios.filter((s) => s.tipo === "representante_legal");
   const testemunhasCliente = signatarios.filter((s) => s.tipo === "testemunha");
   const donoDoRascunho = pedido.vendedor_id === sessao.id;
 
-  const legado = detectarPlanoLegado(pedido.perfil, pedido.plano_legado_nome_original ?? "");
   const alertas = gerarAlertas({
     valorMensal: pedido.valor_mensal,
     valorTotal: pedido.valor_total,
@@ -68,7 +68,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
     foro: pedido.foro,
     temRepresentanteLegal: representantesLegais.length > 0,
     planoLegadoDetectado: pedido.plano_legado_detectado,
-    planoLegadoNomeOriginal: legado?.nomeOriginal ?? pedido.plano_legado_nome_original,
+    planoLegadoNomeOriginal: pedido.plano_legado_nome_original,
     planoLegadoConfirmado: pedido.plano_legado_detectado,
   });
 
@@ -98,7 +98,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
         <div>
           <h1 className="text-xl font-bold text-foreground">{cliente?.razao_social ?? "Pedido"}</h1>
           <p className="text-sm text-muted-foreground capitalize">
-            {pedido.perfil} · {pedido.plano} · vendedor: {vendedorNome ?? "—"}
+            {pedido.perfil} · {planoLabel} · vendedor: {vendedorNome ?? "—"}
           </p>
         </div>
         <div className="flex items-center gap-3">

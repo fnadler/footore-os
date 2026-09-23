@@ -1,9 +1,9 @@
 // Fonte da Cláusula Sexta (DO PREÇO E DAS LICENÇAS) — rótulos × valores por plano.
 //
 // Reconciliado contra `_skill/references/{features,planos}.md` (pacote de referência
-// "footlink-contract", linha Scout — set/2026). O prefixo "Scout" impresso no contrato
-// (ex.: "PLANO FOOTLINK SCOUT ESSENTIAL") é aplicado só na montagem dos dados do
-// gerador (ver `rotuloScoutPlano`), não é armazenado em `pedidos.plano`.
+// "footlink-contract", linha Scout — set/2026). `pedidos.plano` guarda a KEY canônica
+// do registro (src/lib/plans/plan-registry.json e normalize.ts) — o "tier" puro usado
+// aqui pra indexar as tabelas de features é resolvido a partir da key (ver `tierDaKey`).
 //
 // FEATURES_CLUBE já era fiel aos 4 contratos-modelo reais (GOIAS/BRAGANTINO)
 // verificados na Fase 1 — os rótulos e tiers não mudaram na atualização Scout.
@@ -20,11 +20,6 @@ export type PlanoAgente = "Single" | "Basic" | "Essential" | "Prime" | "Elite";
 
 export const PLANOS_CLUBE: PlanoClube[] = ["Starter", "Basic", "Essential", "Elite", "Multi-Club"];
 export const PLANOS_AGENTE: PlanoAgente[] = ["Single", "Basic", "Essential", "Prime", "Elite"];
-
-/** "Scout <Plano>" — só usado ao montar o contrato, nunca armazenado em `pedidos.plano`. */
-export function rotuloScoutPlano(plano: string): string {
-  return `Scout ${plano}`;
-}
 
 interface FeatureRow<P extends string> {
   /** Texto literal da coluna esquerda — não reescrever (references/features.md). */

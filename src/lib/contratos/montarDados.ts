@@ -4,7 +4,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { DadosContrato, Signatario } from "./gerarContrato";
-import { montarFeatures, rotuloScoutPlano } from "./planos";
+import { montarFeatures } from "./planos";
+import { buscarPlanoPorKey, tierDaKey } from "@/lib/plans/normalize";
 import { gerarParcelas } from "./parcelas";
 import { valorFormatadoComExtenso, formatarMoeda } from "./valorPorExtenso";
 import { FORO_DEFAULT } from "@/lib/validacoes/pedido";
@@ -50,9 +51,18 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
     .filter((r): r is { nome: string } => !!r)
     .map((r) => ({ nome: r.nome }));
 
+  // pedido.plano guarda a key canônica (ex.: "clube:scout-essential") — resolve pro
+  // nome do tier (FEATURES_CLUBE/FEATURES_AGENTE continuam indexadas por tier puro)
+  // e pro rótulo "Scout X" já pronto pra imprimir (registro é a fonte única).
+  const planoCanonico = buscarPlanoPorKey(pedido.plano);
+  const tier = tierDaKey(pedido.plano);
+  if (!planoCanonico || !tier) {
+    throw new Error(`Plano "${pedido.plano}" não encontrado no registro canônico (plan-registry.json).`);
+  }
+
   const features = montarFeatures(
     pedido.perfil,
-    pedido.plano,
+    tier,
     pedido.produtos.includes("api"),
     pedido.licencas_pagas,
     pedido.licencas_gratuitas,
@@ -73,7 +83,7 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
     testemunhasContratante,
     representantesFooture,
     testemunhasFooture: (testemunhasFooture ?? []).map(paraSignatario),
-    plano: rotuloScoutPlano(pedido.plano),
+    plano: planoCanonico.canonical,
     api: pedido.produtos.includes("api"),
     apiModelo: pedido.api_modelo ?? undefined,
     pagamento: pedido.forma_pagamento,

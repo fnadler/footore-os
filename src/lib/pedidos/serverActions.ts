@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
-import { detectarPlanoLegado } from "@/lib/contratos/legado";
+import { normalizePlan, buscarPlanoPorKey } from "@/lib/plans/normalize";
 import { podeRegistrarPedido } from "@/lib/validacoes/pedido";
 import * as acoes from "@/lib/pedidos/acoes";
 import { STATUS_EDITAVEIS } from "@/lib/pedidos/statusEditavel";
@@ -81,10 +81,19 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
   }
   const payload = parsed.data;
 
-  if (payload.perfil === "agente" && !payload.planoLegadoConfirmado) {
-    const legado = detectarPlanoLegado(payload.perfil, payload.plano);
-    if (legado) {
-      return { erro: `Plano legado "${legado.nomeOriginal}" precisa de confirmação antes de salvar.` };
+  // `plano` é sempre a key canônica do registro (plan-registry.json) — nunca texto
+  // livre. Se não resolver, os dados foram montados fora do fluxo normal do form.
+  const planoResolvido = buscarPlanoPorKey(payload.plano);
+  if (!planoResolvido || !payload.plano.startsWith(`${payload.perfil}:`)) {
+    return { erro: `Plano "${payload.plano}" inválido para o perfil "${payload.perfil}".` };
+  }
+
+  // Nome de plano de geração anterior (campo livre "plano no pedido original")
+  // nunca é convertido em silêncio — precisa de confirmação explícita do vendedor.
+  if (payload.planoLegadoNomeOriginal && !payload.planoLegadoConfirmado) {
+    const normalizado = normalizePlan(payload.perfil, payload.planoLegadoNomeOriginal);
+    if (normalizado.status === "needs_confirmation") {
+      return { erro: `Plano legado "${payload.planoLegadoNomeOriginal}" precisa de confirmação antes de salvar.` };
     }
   }
 

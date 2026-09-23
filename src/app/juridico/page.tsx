@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listarFilaJuridico } from "@/lib/pedidos/consultas";
 import { urlLogoCliente } from "@/lib/clientes/consultas";
+import { buscarPlanoPorKey } from "@/lib/plans/normalize";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { RotuloStatus } from "@/components/rotulo-status";
@@ -43,7 +44,7 @@ export default async function JuridicoPage() {
                   </TableCell>
                   <TableCell>{cliente?.razao_social ?? "—"}</TableCell>
                   <TableCell>
-                    {p.perfil} · {p.plano}
+                    {p.perfil} · {buscarPlanoPorKey(p.plano)?.canonical ?? p.plano}
                   </TableCell>
                   <TableCell>{formatarMoeda(p.valor_total)}</TableCell>
                   <TableCell>

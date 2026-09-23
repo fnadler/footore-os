@@ -16,8 +16,7 @@ import { SignatarioListEditor, type SignatarioForm } from "./signatario-list-edi
 import { PainelAlertas } from "./painel-alertas";
 import { salvarPedido, type SalvarPedidoState } from "@/lib/pedidos/serverActions";
 import { gerarAlertas, FORO_DEFAULT } from "@/lib/validacoes/pedido";
-import { detectarPlanoLegado } from "@/lib/contratos/legado";
-import { PLANOS_CLUBE, PLANOS_AGENTE } from "@/lib/contratos/planos";
+import { normalizePlan, listarPlanosCanonicos } from "@/lib/plans/normalize";
 import { ROTULO_MULTA, textoMultaDefault } from "@/lib/contratos/multa";
 import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
 import type { MultaTipo, MeioPagamento, Divulgacao, ApiModelo } from "@/lib/supabase/database.types";
@@ -122,7 +121,12 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
   const [nomePlanoImportado, setNomePlanoImportado] = useState(d?.nomePlanoImportado ?? "");
   const [plano, setPlano] = useState(d?.plano ?? "");
   const [planoLegadoConfirmado, setPlanoLegadoConfirmado] = useState(d?.planoLegadoConfirmado ?? false);
-  const legadoDetectado = useMemo(() => detectarPlanoLegado(perfil, nomePlanoImportado), [perfil, nomePlanoImportado]);
+  // NUNCA converte em silêncio — nome de geração anterior ou termo ambíguo (ex.:
+  // "prime" pro agente) sempre exigem confirmação explícita (plan-registry.json).
+  const normalizado = useMemo(
+    () => (nomePlanoImportado.trim() ? normalizePlan(perfil, nomePlanoImportado) : null),
+    [perfil, nomePlanoImportado],
+  );
 
   const [incluiApi, setIncluiApi] = useState(d?.incluiApi ?? false);
   const [licencasPagas, setLicencasPagas] = useState(d?.licencasPagas ?? 1);
@@ -171,8 +175,8 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
         licencasGratuitas,
         foro,
         temRepresentanteLegal: representantesLegais.length > 0,
-        planoLegadoDetectado: !!legadoDetectado,
-        planoLegadoNomeOriginal: legadoDetectado?.nomeOriginal,
+        planoLegadoDetectado: normalizado?.status === "needs_confirmation",
+        planoLegadoNomeOriginal: nomePlanoImportado || undefined,
         planoLegadoConfirmado,
       }),
     [
@@ -183,12 +187,13 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
       licencasGratuitas,
       foro,
       representantesLegais,
-      legadoDetectado,
+      normalizado,
+      nomePlanoImportado,
       planoLegadoConfirmado,
     ],
   );
 
-  const planosDisponiveis = perfil === "clube" ? PLANOS_CLUBE : PLANOS_AGENTE;
+  const planosDisponiveis = useMemo(() => listarPlanosCanonicos(perfil), [perfil]);
   const signatariosDoClienteSelecionado = clienteId ? (signatariosPorCliente[clienteId] ?? []) : [];
 
   function aoEnviar(formData: FormData) {
@@ -199,7 +204,7 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
       perfil,
       produtos: incluiApi ? ["footlink", "api"] : ["footlink"],
       plano,
-      planoLegadoNomeOriginal: legadoDetectado?.nomeOriginal ?? null,
+      planoLegadoNomeOriginal: nomePlanoImportado || null,
       planoLegadoConfirmado,
       licencasPagas,
       licencasGratuitas,
@@ -363,23 +368,36 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           {perfil === "agente" && (
             <div className="flex flex-col gap-2">
               <Label>Nome do plano no pedido original (se veio de um pedido antigo/legado)</Label>
-              <Input value={nomePlanoImportado} onChange={(e) => setNomePlanoImportado(e.target.value)} placeholder="ex.: Latam" />
-              {legadoDetectado && (
-                <div className="flex items-center gap-2 rounded-md border border-amber-400 bg-amber-50 p-2 text-sm dark:bg-amber-950">
-                  <span>
-                    Nome legado &quot;{legadoDetectado.nomeOriginal}&quot; → plano atual sugerido: <strong>{legadoDetectado.planoSugerido}</strong>.
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setPlano(legadoDetectado.planoSugerido);
-                      setPlanoLegadoConfirmado(true);
-                    }}
-                  >
-                    Confirmar
-                  </Button>
+              <Input
+                value={nomePlanoImportado}
+                onChange={(e) => {
+                  setNomePlanoImportado(e.target.value);
+                  setPlanoLegadoConfirmado(false);
+                }}
+                placeholder="ex.: Latam"
+              />
+              {normalizado?.status === "needs_confirmation" && (
+                <div className="flex flex-col gap-2 rounded-md border border-amber-400 bg-amber-50 p-2 text-sm dark:bg-amber-950">
+                  <span>{normalizado.reason}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {normalizado.candidates.map((c) => (
+                      <Button
+                        key={c.key}
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          setPlano(c.key);
+                          setPlanoLegadoConfirmado(true);
+                        }}
+                      >
+                        Confirmar: {c.canonical}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
+              )}
+              {normalizado?.status === "unknown" && (
+                <p className="text-sm text-destructive">{normalizado.reason}</p>
               )}
             </div>
           )}
@@ -392,8 +410,8 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               </SelectTrigger>
               <SelectContent>
                 {planosDisponiveis.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
+                  <SelectItem key={p.key} value={p.key}>
+                    {p.canonical}
                   </SelectItem>
                 ))}
               </SelectContent>

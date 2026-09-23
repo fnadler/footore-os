@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { LogoCliente } from "@/components/clientes/logo-cliente";
+import { buscarPlanoPorKey } from "@/lib/plans/normalize";
 
 function formatarMoeda(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -26,7 +27,8 @@ export default async function AdminAprovacaoPage() {
             <Alert key={p.id} variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>
-                Falha ao gerar contrato — {(p.clientes as unknown as { razao_social: string } | null)?.razao_social} ({p.plano})
+                Falha ao gerar contrato — {(p.clientes as unknown as { razao_social: string } | null)?.razao_social} (
+                {buscarPlanoPorKey(p.plano)?.canonical ?? p.plano})
               </AlertTitle>
               <AlertDescription className="flex items-center justify-between gap-4">
                 <span>{p.geracao_contrato_erro}</span>
@@ -62,7 +64,7 @@ export default async function AdminAprovacaoPage() {
                   <TableCell>{cliente?.razao_social ?? "—"}</TableCell>
                   <TableCell>{(p.profiles as unknown as { nome: string } | null)?.nome ?? "—"}</TableCell>
                   <TableCell>
-                    {p.perfil} · {p.plano}
+                    {p.perfil} · {buscarPlanoPorKey(p.plano)?.canonical ?? p.plano}
                   </TableCell>
                   <TableCell>{formatarMoeda(p.valor_total)}</TableCell>
                   <TableCell className="text-right">

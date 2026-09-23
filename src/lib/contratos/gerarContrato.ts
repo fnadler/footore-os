@@ -54,7 +54,7 @@ export interface DadosContrato {
   testemunhasContratante: Signatario[];
   representantesFooture: { nome: string }[];
   testemunhasFooture: Signatario[];
-  /** Já vem com o prefixo "Scout" aplicado (ver rotuloScoutPlano em planos.ts). */
+  /** Já vem com o prefixo "Scout" aplicado (resolvido via lib/plans/normalize.ts). */
   plano: string;
   api: boolean;
   /** Só relevante quando `api` — 'combinado' usa o texto/total já somado (igual ao caso sem
