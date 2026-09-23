@@ -281,7 +281,7 @@ export interface Database {
           pedido_id: string;
           de: StatusPedido | null;
           para: StatusPedido;
-          ator_id: string;
+          ator_id: string | null;
           comentario: string | null;
           criado_em: string;
         },
@@ -290,7 +290,7 @@ export interface Database {
           pedido_id: string;
           de?: StatusPedido | null;
           para: StatusPedido;
-          ator_id: string;
+          ator_id?: string | null;
           comentario?: string | null;
         },
         never
