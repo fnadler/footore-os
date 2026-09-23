@@ -79,9 +79,17 @@ interface Props {
 }
 
 // Campos numéricos partem de 0 — sem isso, clicar pra digitar deixa o "0" na
-// frente do valor novo em vez de substituí-lo.
+// frente do valor novo em vez de substituí-lo. `input type="number"` não
+// suporta selection APIs de forma confiável entre navegadores (Safari não
+// implementa .select() nesse tipo, é limitação de spec, não bug de lógica) —
+// por isso esses campos usam type="text" + inputMode, com .select() no focus.
 function selecionarConteudo(e: FocusEvent<HTMLInputElement>) {
   e.target.select();
+}
+
+function paraNumero(texto: string): number {
+  const n = Number(texto);
+  return Number.isNaN(n) ? 0 : n;
 }
 
 function somarMeses(dataISO: string, meses: number): string {
@@ -422,20 +430,20 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
             <div className="flex flex-col gap-2">
               <Label>Licenças pagas</Label>
               <Input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
                 value={licencasPagas}
-                onChange={(e) => setLicencasPagas(Number(e.target.value))}
+                onChange={(e) => setLicencasPagas(paraNumero(e.target.value))}
                 onFocus={selecionarConteudo}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Licenças gratuitas</Label>
               <Input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
                 value={licencasGratuitas}
-                onChange={(e) => setLicencasGratuitas(Number(e.target.value))}
+                onChange={(e) => setLicencasGratuitas(paraNumero(e.target.value))}
                 onFocus={selecionarConteudo}
               />
             </div>
@@ -490,11 +498,11 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <div className="flex flex-col gap-2">
                 <Label>Valor mensal da API</Label>
                 <Input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={valorMensalApi}
                   onChange={(e) => {
-                    const v = Number(e.target.value);
+                    const v = paraNumero(e.target.value);
                     setValorMensalApi(v);
                     setValorMensal(v + valorMensalSoftware);
                   }}
@@ -504,11 +512,11 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <div className="flex flex-col gap-2">
                 <Label>Valor mensal do software</Label>
                 <Input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={valorMensalSoftware}
                   onChange={(e) => {
-                    const v = Number(e.target.value);
+                    const v = paraNumero(e.target.value);
                     setValorMensalSoftware(v);
                     setValorMensal(v + valorMensalApi);
                   }}
@@ -528,10 +536,10 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <div className="flex flex-col gap-2">
                 <Label>Número de parcelas</Label>
                 <Input
-                  type="number"
-                  min={1}
+                  type="text"
+                  inputMode="numeric"
                   value={numeroParcelas}
-                  onChange={(e) => setNumeroParcelas(Number(e.target.value))}
+                  onChange={(e) => setNumeroParcelas(paraNumero(e.target.value))}
                   onFocus={selecionarConteudo}
                 />
               </div>
@@ -539,10 +547,10 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
             <div className="flex flex-col gap-2">
               <Label>Valor da parcela</Label>
               <Input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={valorMensal}
-                onChange={(e) => setValorMensal(Number(e.target.value))}
+                onChange={(e) => setValorMensal(paraNumero(e.target.value))}
                 onFocus={selecionarConteudo}
               />
             </div>
@@ -550,15 +558,15 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <Label>
                 Valor total{formaPagamento === "parcelado" ? " (parcela × número de parcelas)" : ""}
               </Label>
-              <Input type="number" step="0.01" value={valorTotal} disabled />
+              <Input type="text" inputMode="decimal" value={valorTotal} disabled />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Valor da licença adicional</Label>
               <Input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={valorLicencaAdicional}
-                onChange={(e) => setValorLicencaAdicional(Number(e.target.value))}
+                onChange={(e) => setValorLicencaAdicional(paraNumero(e.target.value))}
                 onFocus={selecionarConteudo}
               />
             </div>
@@ -574,11 +582,10 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                 <div className="flex flex-col gap-2">
                   <Label>Dia de vencimento recorrente</Label>
                   <Input
-                    type="number"
-                    min={1}
-                    max={31}
+                    type="text"
+                    inputMode="numeric"
                     value={diaVencimento}
-                    onChange={(e) => setDiaVencimento(Number(e.target.value))}
+                    onChange={(e) => setDiaVencimento(paraNumero(e.target.value))}
                     onFocus={selecionarConteudo}
                   />
                 </div>
@@ -674,10 +681,10 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                 <div className="flex flex-col gap-2">
                   <Label>Percentual de desconto combinado</Label>
                   <Input
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={percentualDescontoDivulgacao}
-                    onChange={(e) => setPercentualDescontoDivulgacao(Number(e.target.value))}
+                    onChange={(e) => setPercentualDescontoDivulgacao(paraNumero(e.target.value))}
                     onFocus={selecionarConteudo}
                   />
                   <p className="text-xs text-muted-foreground">
