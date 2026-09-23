@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const { data: contrato } = await supabase
     .from("contratos")
-    .select("id, pedido_id, versao, clicksign_envelope_id")
+    .select("id, pedido_id, versao, arquivo_path, clicksign_envelope_id")
     .eq("clicksign_document_id", documentId)
     .single();
 
@@ -69,6 +69,9 @@ export async function POST(request: Request) {
         .from("contratos")
         .upload(pathAssinado, bufferAssinado, { contentType: "application/pdf", upsert: true });
       await supabase.from("contratos").update({ arquivo_assinado_path: pathAssinado }).eq("id", contrato.id);
+      // A partir daqui o PDF assinado é o documento válido — o .docx original
+      // some do Storage (só apaga depois de confirmar que o PDF já está salvo).
+      await supabase.storage.from("contratos").remove([contrato.arquivo_path]);
     } else {
       console.error("[webhook clicksign] documento fechado sem link de arquivo assinado, seguindo sem arquivar.");
     }

@@ -84,7 +84,16 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
       const { data } = await supabase.storage
         .from("contratos")
         .createSignedUrl(c.arquivo_path, 3600, { download: nomeDownload });
-      return { ...c, url: data?.signedUrl ?? null };
+
+      let urlAssinado: string | null = null;
+      if (c.arquivo_assinado_path) {
+        const { data: assinado } = await supabase.storage
+          .from("contratos")
+          .createSignedUrl(c.arquivo_assinado_path, 3600, { download: nomeDownload.replace(/\.docx$/, ".pdf") });
+        urlAssinado = assinado?.signedUrl ?? null;
+      }
+
+      return { ...c, url: data?.signedUrl ?? null, urlAssinado };
     }),
   );
 
@@ -217,10 +226,18 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
                   </p>
                   {c.motivo_versao && <p className="text-xs text-muted-foreground">{c.motivo_versao}</p>}
                 </div>
-                {c.url && (
-                  <a href={c.url} className="text-sm text-primary underline" target="_blank" rel="noreferrer">
-                    Baixar
+                {/* Depois de assinado, só o PDF assinado fica disponível — o .docx
+                    original deixa de ser o documento válido. */}
+                {c.urlAssinado ? (
+                  <a href={c.urlAssinado} className="text-sm text-primary underline" target="_blank" rel="noreferrer">
+                    Baixar PDF assinado
                   </a>
+                ) : (
+                  c.url && (
+                    <a href={c.url} className="text-sm text-primary underline" target="_blank" rel="noreferrer">
+                      Baixar
+                    </a>
+                  )
                 )}
               </div>
             ))}
