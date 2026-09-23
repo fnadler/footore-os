@@ -14,7 +14,8 @@ export type StatusPedido =
   | "pronto_para_assinatura"
   | "enviado_para_assinatura"
   | "assinado"
-  | "concluido";
+  | "concluido"
+  | "cancelado";
 export type FormaPagamento = "avista" | "parcelado";
 export type ConvencaoParcelas = "calendario" | "ciclo";
 export type MeioPagamento = "boleto" | "pix" | "transferencia_bancaria" | "cartao_credito" | "cartao_debito";

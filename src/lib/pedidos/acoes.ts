@@ -187,3 +187,9 @@ export async function reabrirParaEdicao(supabase: Supa, pedidoId: string) {
 export async function cancelarAssinatura(supabase: Supa, pedidoId: string, comentario?: string) {
   await registrarTransicao(supabase, pedidoId, "em_revisao_juridica", comentario ?? "Processo de assinatura cancelado.");
 }
+
+/** Qualquer status não-terminal -> CANCELADO. Encerra o pedido de venda (diferente de
+ * "cancelar assinatura", que só reabre o processo de assinatura — aqui o pedido morre). */
+export async function cancelarPedido(supabase: Supa, pedidoId: string, comentario: string) {
+  await registrarTransicao(supabase, pedidoId, "cancelado", comentario);
+}

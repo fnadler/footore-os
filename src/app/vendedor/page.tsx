@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { RotuloStatus } from "@/components/rotulo-status";
 import { LogoCliente } from "@/components/clientes/logo-cliente";
+import { CancelarPedidoDialog } from "@/components/pedido/cancelar-pedido-dialog";
 
 export default async function VendedorPage() {
   const sessao = await exigirPapel("vendedor");
@@ -57,16 +58,21 @@ export default async function VendedorPage() {
                     <RotuloStatus status={p.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      nativeButton={false}
-                      render={
-                        <Link href={pedidoEhEditavel(p.status) ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
-                          {pedidoEhEditavel(p.status) ? "Editar" : "Ver"}
-                        </Link>
-                      }
-                    />
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        nativeButton={false}
+                        render={
+                          <Link href={pedidoEhEditavel(p.status) ? `/vendedor/${p.id}/editar` : `/pedidos/${p.id}`}>
+                            {pedidoEhEditavel(p.status) ? "Editar" : "Ver"}
+                          </Link>
+                        }
+                      />
+                      {p.status !== "concluido" && p.status !== "cancelado" && (
+                        <CancelarPedidoDialog pedidoId={p.id} trigger="icone" />
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );

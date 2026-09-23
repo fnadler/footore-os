@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Ban, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StatusPedido } from "@/lib/supabase/database.types";
 
@@ -14,6 +14,17 @@ const ETAPAS: { status: StatusPedido; label: string }[] = [
 ];
 
 export function StepperPedido({ status }: { status: StatusPedido }) {
+  // Cancelado é um estado divergente, não um passo a mais na sequência linear
+  // (pode ter acontecido a partir de qualquer etapa — ver a linha do tempo).
+  if (status === "cancelado") {
+    return (
+      <div className="flex items-center gap-2 text-sm font-bold text-destructive">
+        <Ban className="size-5" />
+        Pedido cancelado
+      </div>
+    );
+  }
+
   const indiceAtual = ETAPAS.findIndex((e) => e.status === status);
 
   return (

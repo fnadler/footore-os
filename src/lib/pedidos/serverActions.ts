@@ -329,6 +329,17 @@ export async function cancelarAssinaturaAction(pedidoId: string, comentario?: st
   revalidatePath(`/pedidos/${pedidoId}`);
 }
 
+export async function cancelarPedidoAction(pedidoId: string, motivo: string, observacao?: string) {
+  await exigirPapel("vendedor", "admin", "juridico");
+  const supabase = await createClient();
+  const comentario = observacao?.trim() ? `Motivo: ${motivo}. Observação: ${observacao.trim()}` : `Motivo: ${motivo}.`;
+  await acoes.cancelarPedido(supabase, pedidoId, comentario);
+  revalidatePath("/vendedor");
+  revalidatePath("/admin");
+  revalidatePath("/juridico");
+  revalidatePath(`/pedidos/${pedidoId}`);
+}
+
 export interface SubirVersaoState {
   erro?: string;
   sucesso?: boolean;

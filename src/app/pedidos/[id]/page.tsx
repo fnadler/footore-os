@@ -15,6 +15,7 @@ import { RotuloStatus, ROTULO_STATUS } from "@/components/rotulo-status";
 import { PainelAlertas } from "@/components/pedido/painel-alertas";
 import { StepperPedido } from "@/components/pedido/stepper-pedido";
 import { ProximaAcao } from "@/components/pedido/proxima-acao";
+import { CancelarPedidoDialog } from "@/components/pedido/cancelar-pedido-dialog";
 import { BlocoFormulario } from "@/components/pedido/bloco-formulario";
 import { InfoRow } from "@/components/pedido/info-row";
 import { ListaPessoas } from "@/components/pedido/lista-pessoas";
@@ -58,6 +59,10 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
   const representantesLegais = signatarios.filter((s) => s.tipo === "representante_legal");
   const testemunhasCliente = signatarios.filter((s) => s.tipo === "testemunha");
   const donoDoRascunho = pedido.vendedor_id === sessao.id;
+  const podeCancelar =
+    pedido.status !== "concluido" &&
+    pedido.status !== "cancelado" &&
+    (sessao.papel === "admin" || sessao.papel === "juridico" || (sessao.papel === "vendedor" && donoDoRascunho));
 
   const alertas = gerarAlertas({
     valorMensal: pedido.valor_mensal,
@@ -106,6 +111,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
           {sessao.papel === "vendedor" && donoDoRascunho && pedidoEhEditavel(pedido.status) && (
             <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/vendedor/${pedido.id}/editar`}>Editar</Link>} />
           )}
+          {podeCancelar && <CancelarPedidoDialog pedidoId={pedido.id} />}
         </div>
       </div>
 

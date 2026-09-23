@@ -10,6 +10,7 @@ export const ROTULO_STATUS: Record<StatusPedido, string> = {
   enviado_para_assinatura: "Enviado para assinatura",
   assinado: "Assinado",
   concluido: "Concluído",
+  cancelado: "Cancelado",
 };
 
 // Segue o padrão de status pill do design_system.html real (Pendente/Novo/
@@ -17,7 +18,7 @@ export const ROTULO_STATUS: Record<StatusPedido, string> = {
 // pendem de ação de alguém (warning), aprovado/enviado estão "em trânsito"
 // (info), pronto_para_assinatura é a única cor de marca (ação imediata
 // esperada), assinado/concluído são sucesso.
-const VARIANTE_STATUS: Record<StatusPedido, "neutral" | "warning" | "info" | "default" | "success"> = {
+const VARIANTE_STATUS: Record<StatusPedido, "neutral" | "warning" | "info" | "default" | "success" | "destructive"> = {
   rascunho: "neutral",
   em_aprovacao: "warning",
   aprovado: "info",
@@ -26,6 +27,7 @@ const VARIANTE_STATUS: Record<StatusPedido, "neutral" | "warning" | "info" | "de
   enviado_para_assinatura: "info",
   assinado: "success",
   concluido: "success",
+  cancelado: "destructive",
 };
 
 export function RotuloStatus({ status }: { status: StatusPedido }) {
