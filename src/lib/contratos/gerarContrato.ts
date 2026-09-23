@@ -35,7 +35,6 @@ import {
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import type { Parcela } from "./parcelas";
-import { numeroComExtenso } from "./valorPorExtenso";
 
 export interface Signatario {
   nomeCompleto: string;
@@ -45,6 +44,9 @@ export interface Signatario {
 
 export interface DadosContrato {
   perfil: "clube" | "agente";
+  /** Linhagem enxuta (padrão, os dois perfis) vs robusta (SLA 98%/LGPD reforçada) — decisão
+   * comercial por cliente, não decorre mais do perfil (ver _skill/references/clausulas.md). */
+  robusta: boolean;
   cliente: string;
   cnpj: string;
   endereco: string;
@@ -52,9 +54,15 @@ export interface DadosContrato {
   testemunhasContratante: Signatario[];
   representantesFooture: { nome: string }[];
   testemunhasFooture: Signatario[];
+  /** Já vem com o prefixo "Scout" aplicado (ver rotuloScoutPlano em planos.ts). */
   plano: string;
   api: boolean;
+  /** Só relevante quando `api` — 'combinado' usa o texto/total já somado (igual ao caso sem
+   * API); 'distintos' discrimina parcela da API e do software (padrão Corinthians). */
+  apiModelo?: "combinado" | "distintos";
   pagamento: "parcelado" | "avista";
+  /** Só relevante quando pagamento === "parcelado" — boleto (padrão) ou pix (bloco bancário). */
+  metodo?: "boleto" | "pix";
   total: string;
   mensal: string;
   mensalApi?: string;
@@ -67,7 +75,11 @@ export interface DadosContrato {
   numeroParcelas?: number;
   vigIni: string;
   vigFim: string;
-  divulga: boolean;
+  divulgacao: "nenhuma" | "simples" | "obrigacao";
+  /** Só relevante quando divulgacao === "obrigacao" — narrativa, não entra em cálculo
+   * (o valor já descontado é o que o vendedor informa em total/mensal). */
+  percentualDesconto?: number;
+  postDivulgacao?: string;
   foro: string;
   multaTexto: string;
   features: Array<[string, string]>;
@@ -133,7 +145,7 @@ function buildFooter(D: DadosContrato) {
         border: { top: { style: BorderStyle.SINGLE, size: 6, color: "5B4FC4" } },
         children: [
           new TextRun({
-            text: `Instrumento Particular de Licença de Uso do Software Footlink  ·  ${D.cliente}  ·  Início da vigência: ${D.vigIni || "—"}`,
+            text: `Instrumento Particular de Uso do Software Footlink  ·  ${D.cliente}  ·  Início da vigência: ${D.vigIni || "—"}`,
             size: 14,
             color: "666666",
           }),
@@ -163,6 +175,23 @@ function featTable(planoLabel: string, features: Array<[string, string]>) {
     }),
   ];
   for (const [f, v] of features) {
+    if (f === "#") {
+      // Linha de seção (tabela de agente, agrupada em Capacidade/Minha Agência/Base de
+      // Atletas/Mercado) — subcabeçalho ocupando as duas colunas.
+      rows.push(
+        new TableRow({
+          children: [
+            new TableCell({
+              columnSpan: 2,
+              width: { size: 9200, type: WidthType.DXA },
+              shading: { type: ShadingType.CLEAR, fill: "ECECF7" },
+              children: [P([B(v)])],
+            }),
+          ],
+        }),
+      );
+      continue;
+    }
     rows.push(
       new TableRow({
         children: [
@@ -206,6 +235,70 @@ function parcTable(parcelas: Parcela[]) {
   }
   return new Table({ columnWidths: w, width: { size: 9200, type: WidthType.DXA }, rows });
 }
+
+// ---------- bloco de dados bancários (Cláusula Oitava, PIX) ----------
+function pixBankBlock(): Paragraph[] {
+  const linhas = [
+    "FOOTURE PRODUTORA DE CONTEUDO, SOFTWARE E SERVICOS LTDA",
+    "(CNPJ: 32.527.841/0001-48)",
+    "BANCO: INTER S.A. 077",
+    "AGÊNCIA: 0001",
+    "CONTA CORRENTE: 2463249 – 0",
+    "PIX: CNPJ32527841000148",
+  ];
+  return linhas.map((l) => new Paragraph({ spacing: { after: 0 }, alignment: AlignmentType.LEFT, children: [B(l)] }));
+}
+
+// ---------- divulgação "obrigação de fazer" (§§ da Cláusula Sétima) ----------
+// Só narrativa — o desconto (5% parcela < R$1.000, 10% se ≥, sempre informado no
+// pedido) já está refletido em D.total/D.mensal; não recalcula nada aqui.
+function blocoDivulgacaoObrigacao(D: DadosContrato, proxParagrafo: () => string): Paragraph[] {
+  const post = D.postDivulgacao || "uma imagem promocional com texto de divulgação da parceria a ser aprovado entre as partes";
+  return [
+    P([
+      B(proxParagrafo()),
+      R(
+        `Além do valor acima, constitui o preço pelo objeto do presente contrato a seguinte obrigação de fazer: em data a ser ajustada entre os departamentos de comunicação e marketing das partes, o CONTRATANTE irá publicar nas suas redes sociais (Instagram, twitter, facebook e linkedin), marcando “@FootureFC”, “@footlink.app” e “@Footlink_”, ${post}.`,
+      ),
+    ]),
+    P([
+      B(proxParagrafo()),
+      R(
+        "Da mesma forma, o CONTRATANTE autoriza à CONTRATADA a publicação da imagem e texto nas redes sociais (Instagram, twitter, facebook e linkedin) @FootureFC, @footlink.app, @Footlink.",
+      ),
+    ]),
+  ];
+}
+
+// ---------- numeração dinâmica das cláusulas ----------
+// A divulgação "simples" é uma cláusula standalone (Décima) que desloca vigência/
+// rescisão/confidencialidade/exclusividade/disposições/foro — as demais (Primeira a
+// Nona) são sempre fixas. "obrigacao" não desloca nada (entra como §§ na Sétima).
+const ORD = [
+  "",
+  "PRIMEIRA",
+  "SEGUNDA",
+  "TERCEIRA",
+  "QUARTA",
+  "QUINTA",
+  "SEXTA",
+  "SÉTIMA",
+  "OITAVA",
+  "NONA",
+  "DÉCIMA",
+  "DÉCIMA PRIMEIRA",
+  "DÉCIMA SEGUNDA",
+  "DÉCIMA TERCEIRA",
+  "DÉCIMA QUARTA",
+  "DÉCIMA QUINTA",
+  "DÉCIMA SEXTA",
+  "DÉCIMA SÉTIMA",
+  "DÉCIMA OITAVA",
+  "DÉCIMA NONA",
+  "VIGÉSIMA",
+  "VIGÉSIMA PRIMEIRA",
+];
+const CL = (n: number) => `CLÁUSULA ${ORD[n]}: `;
 
 // ---------- bloco LGPD reforçado (clube) ----------
 function lgpdReforcada(): Paragraph[] {
@@ -457,17 +550,28 @@ export function gerarContrato(D: DadosContrato): Document {
   const isClube = D.perfil === "clube";
   const k: (Paragraph | Table)[] = [];
 
-  k.push(H("INSTRUMENTO PARTICULAR DE LICENÇA DE USO DO SOFTWARE FOOTLINK"));
+  const divStandalone = D.divulgacao === "simples" ? 1 : 0;
+  const nVigencia = 10 + divStandalone;
+  const nRescisao = nVigencia + 1;
+  const nConfid = nRescisao + 1;
+  const nExclus = nConfid + 1;
+  const nDisp1 = nExclus + 1;
+  const nDisp2 = nDisp1 + 1;
+  const nDisp3 = nDisp2 + 1;
+  const nDisp4 = nDisp3 + 1;
+  const nForo = nDisp4 + 1;
+
+  k.push(H("INSTRUMENTO PARTICULAR DE USO DO SOFTWARE FOOTLINK"));
 
   // Partes
   k.push(
     P([
       B(`CONTRATANTE: ${D.cliente}, `),
       R(
-        `pessoa jurídica de direito privado, inscrita no CNPJ sob nº ${D.cnpj}, com endereço à ${D.endereco}, neste ato representada na forma prevista em seu Estatuto Social`,
+        `pessoa jurídica de direito privado, inscrita no CNPJ sob nº ${D.cnpj}, com endereço à ${D.endereco}, neste ato representado na forma prevista em seu Estatuto Social`,
       ),
       R(textoRepresentantesContratante(D.representantesContratante)),
-      R(", adiante denominada "),
+      R(", adiante denominado "),
       B("“CONTRATANTE”;"),
     ]),
   );
@@ -475,7 +579,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("CONTRATADA: FOOTURE PRODUTORA DE CONTEUDO, SOFTWARE E SERVICOS LTDA, "),
       R(
-        "pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 32.527.841/0001-48, com sede na cidade de Porto Alegre – RS, na Rua Dr. Barbosa Gonçalves 69, bairro Chácara das Pedras, neste ato representada na forma prevista em seu Estatuto Social, adiante denominada como ",
+        "pessoa jurídica de direito privado, inscrita no CNPJ/MF sob nº 32.527.841/0001-48, com sede na cidade de Porto Alegre – RS, na Rua Dr. Barbosa Gonçalves 69, bairro Chácara das Pedras, neste ato representado na forma prevista em seu Estatuto Social, adiante denominada como ",
       ),
       B("“CONTRATADA”;"),
     ]),
@@ -493,9 +597,10 @@ export function gerarContrato(D: DadosContrato): Document {
   if (D.api)
     objeto +=
       "; e (ii) comercialização da Licença de Acesso temporário da Interface de Programação de Aplicação/Application Programming Interface (API) do software FOOTLINK, que dará acesso a dados de competições, atletas monitorados, atletas inseridos pela organização, avaliações, relatórios e projetos";
-  objeto += ".";
+  // Confirmado: sem API termina em ";" (PANTANAL_teste); com API termina em "." (CORINTHIANS).
+  objeto += D.api ? "." : ";";
   k.push(P([B("CLÁUSULA PRIMEIRA: "), R(objeto)]));
-  if (isClube)
+  if (D.robusta)
     k.push(
       P([
         B("Parágrafo 1º: "),
@@ -506,12 +611,13 @@ export function gerarContrato(D: DadosContrato): Document {
     );
 
   // PI
+  const apiSep = D.api ? " e sua interface API" : "";
   k.push(H("DA PROPRIEDADE INTELECTUAL"));
   k.push(
     P([
       B("CLÁUSULA SEGUNDA: "),
       R(
-        "O CONTRATANTE reconhece como da CONTRATADA todos os direitos concernentes ao software FOOTLINK. Aplicam-se, adicionalmente, as regras estabelecidas na Lei 9.609/98 para regular as demais normas a respeito da titularidade da propriedade intelectual decorrente do software FOOTLINK de titularidade da CONTRATADA.",
+        `O CONTRATANTE reconhece como da CONTRATADA todos os direitos concernentes ao software FOOTLINK${apiSep}. Aplicam-se, adicionalmente, as regras estabelecidas na Lei 9.609/98 para o fim de regular as demais normas a respeito da titularidade da propriedade intelectual decorrente do software FOOTLINK de titularidade da CONTRATADA.`,
       ),
     ]),
   );
@@ -519,7 +625,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 1º: "),
       R(
-        "Todos os direitos autorais e de propriedade intelectual do software FOOTLINK e de obras derivadas são e permanecerão sendo de propriedade única e exclusiva da CONTRATADA, sendo concedida ao CONTRATANTE apenas a licença temporária de uso, onerosa e não exclusiva, nos termos deste Contrato.",
+        `Todos os direitos autorais e de propriedade intelectual do software FOOTLINK${apiSep} e de obras derivadas são e permanecerão sendo de propriedade única e exclusiva da CONTRATADA. A CONTRATANTE declara que não terá qualquer direito ou ação sobre o software FOOTLINK, exceto a licença temporária de uso, onerosa e não exclusiva, nos termos acordados nesse Contrato.`,
       ),
     ]),
   );
@@ -527,7 +633,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 2º: "),
       R(
-        "Todas as modificações, melhorias, correções e novas versões do software FOOTLINK ficarão incorporadas ao software e sujeitas a este Contrato, podendo ser comercializadas pela CONTRATADA a terceiros.",
+        "Todas as modificações, melhorias, correções e novas versões do software FOOTLINK ou de obras derivadas, mesmo que informadas, solicitadas e, eventualmente, pagas pela CONTRATANTE, ficarão incorporadas ao software FOOTLINK e sujeitas a este Contrato, podendo ser disponibilizadas/comercializadas pela CONTRATADA a terceiros.",
       ),
     ]),
   );
@@ -535,7 +641,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 3º: "),
       R(
-        "É vedado ao CONTRATANTE copiar, alterar, desmontar, descompilar, efetuar engenharia reversa ou obter os códigos-fonte do software FOOTLINK, sob pena de responder pelas perdas e danos que der causa.",
+        `É vedado à CONTRATANTE, na pessoa de seus sócios, representantes, empregados, fornecedores ou terceiros interessados, copiar, alterar, desmontar, descompilar, efetuar engenharia reversa ou tomar qualquer providência visando obter os códigos-fonte do software FOOTLINK${apiSep}, devendo responder pelas perdas e danos que comprovadamente der causa, sem qualquer limitação de valor, incluindo danos diretos, indiretos, lucros cessantes e indenização devida a terceiros.`,
       ),
     ]),
   );
@@ -545,29 +651,44 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B("CLÁUSULA TERCEIRA: "),
-      R(`A CONTRATADA se obriga, durante a vigência, a conceder pleno suporte ao CONTRATANTE para utilização do FOOTLINK${D.api ? " e da API" : ""}.`),
+      R(
+        `A CONTRATADA se obriga, no decorrer do prazo de vigência da presente relação contratual, a conceder pleno suporte ao CONTRATANTE para utilização do FOOTLINK${D.api ? " e da API" : ""}.`,
+      ),
     ]),
   );
-  const sla = isClube
-    ? "a CONTRATADA compromete-se a manter um SLA de disponibilidade mínima de 98% (noventa e oito por cento) ao ano"
-    : "a CONTRATADA compromete-se a manter um SLA de disponibilidade anual o mais elevado possível";
+  k.push(
+    P([
+      B("Parágrafo 1º: "),
+      R(
+        "Os serviços técnicos de suporte e manutenção serão efetuados desde que não causados por: (i) negligência ou uso inadequado do Software; ou (ii) uso do Software para fins diversos do projetado.",
+      ),
+    ]),
+  );
+  const sla = D.robusta
+    ? "a CONTRATADA se compromete a manter um SLA de disponibilidade mínima de 98% (noventa e oito por cento) ao ano"
+    : "a CONTRATADA se compromete a manter um SLA de disponibilidade anual o mais elevado possível";
   k.push(
     P([
       B("Parágrafo 2º: "),
       R(
-        `Não existindo garantia integral de disponibilidade de 100% do tempo, ${sla}, ressalvadas manutenções, intervenções de segurança e suspensões por determinação de autoridades ou descumprimento contratual.`,
+        `Partindo-se da premissa de que em prestação de serviços na área de informática não existe garantia integral de manutenção do Software no ar durante 100% do tempo, ${sla}, ressalvadas: (i) interrupções para ajustes técnicos ou manutenção; (ii) intervenções emergenciais de segurança; e (iii) suspensão por determinação de autoridades competentes ou por descumprimento contratual.`,
       ),
     ]),
   );
-  const canais = isClube ? ", através do WhatsApp nº (51) 9782-3228 e do e-mail support@footlink.app" : "";
+  const canais = D.robusta ? ", através do WhatsApp nº (51) 9782-3228 e do e-mail support@footlink.app" : "";
   k.push(
-    P([B("CLÁUSULA QUARTA: "), R(`O suporte será prestado por meio das linhas de comunicação e atendimento online${canais}.`)]),
+    P([
+      B("CLÁUSULA QUARTA: "),
+      R(
+        `Independente da possibilidade do suporte presencial, a CONTRATADA se compromete a prestar o suporte para utilização do FOOTLINK por meio de suas linhas de comunicação e de serviço de atendimento online${canais}.`,
+      ),
+    ]),
   );
   k.push(
     P([
       B("CLÁUSULA QUINTA: "),
       R(
-        "O suporte será prestado pela CONTRATADA através de seus sócios, empregados, estagiários e, eventualmente, profissionais especialmente contratados.",
+        "O suporte para acesso e uso do FOOTLINK será prestado pela CONTRATADA através de seus sócios, empregados, estagiários e, eventualmente, por profissionais especialmente contratados.",
       ),
     ]),
   );
@@ -580,79 +701,103 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 1º: "),
       R(
-        `As licenças serão distribuídas em 2 níveis de acesso, “gerencial” e “analista”, conforme lista enviada pelo ${isClube ? "clube" : "cliente"} após a assinatura.`,
+        `As licenças individuais contratadas serão distribuídas em 2 (dois) níveis de acesso, “gerencial” e “analista”, conforme lista a ser enviada pelo ${isClube ? "clube" : "CONTRATANTE"} após a assinatura do contrato.`,
       ),
     ]),
   );
   k.push(
     P([
       B("Parágrafo 2º: "),
-      R("Não excedendo o número de licenças contratadas, a alteração de níveis, inclusão e troca de logins poderão ser feitas pelo CONTRATANTE a qualquer momento, sem custo."),
+      R("Não excedendo o número de licenças contratadas, a alteração de níveis de acesso, inclusão e troca de logins poderão ser feitas pela CONTRATANTE a qualquer momento, sem qualquer custo adicional."),
     ]),
   );
   k.push(
     P([
       B("Parágrafo 3º: "),
-      R(`Caso o CONTRATANTE queira contratar mais licenças, será acrescido ao pagamento mensal o valor de ${D.licAdicional}/mês por licença, cobrado na próxima fatura em aberto.`),
+      R(`Caso a CONTRATANTE queira contratar mais licenças que as que constam no presente contrato, será acrescido ao pagamento mensal o valor de ${D.licAdicional}/mês por licença. A cobrança das licenças adicionais se dará na próxima fatura em aberto do contrato.`),
     ]),
   );
 
   // Valor (Sétima) + Pagamento (Oitava)
+  // Contador de parágrafo da Sétima — não hardcoded, porque a combinação de API
+  // "distintos" + divulgação "obrigacao" pode empilhar mais de um §.
+  let paragrafoSetima = 0;
+  const proxParagrafoSetima = () => {
+    paragrafoSetima += 1;
+    return `Parágrafo ${paragrafoSetima}º: `;
+  };
+
   if (D.pagamento === "parcelado") {
-    // Era fixo em "12 (doze)" no script original — agora vem do pedido
-    // (D.numeroParcelas), com 12 como default de compatibilidade.
-    const parcelasExtenso = numeroComExtenso(D.numeroParcelas ?? 12);
-    if (D.api && D.mensalApi && D.mensalSoftware) {
+    // Confirmado contra PANTANAL_teste/ELENKO_teste: o número de parcelas aparece
+    // puro ("12 pagamentos fixos"), sem extenso entre parênteses.
+    const numeroParcelas = D.numeroParcelas ?? 12;
+    if (D.api && D.apiModelo === "distintos" && D.mensalApi && D.mensalSoftware) {
       k.push(
         P([
           B("CLÁUSULA SÉTIMA: "),
           R(
-            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, em ${parcelasExtenso} parcelas mensais de ${D.mensal}, sendo cada parcela composta por: (i) ${D.mensalApi} referentes à utilização da API; e (ii) ${D.mensalSoftware} referentes à licença de uso do software FOOTLINK.`,
+            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, em ${numeroParcelas} parcelas mensais de ${D.mensal}, sendo cada parcela composta por: (i) ${D.mensalApi} referentes à utilização da API; e (ii) ${D.mensalSoftware} referentes à licença de uso do software FOOTLINK.`,
           ),
         ]),
       );
       k.push(
         P([
-          B("Parágrafo 1º: "),
+          B(proxParagrafoSetima()),
           R(
             `Fica estabelecido que, para cada parcela mensal, serão emitidos boletos bancários distintos, sendo um boleto no valor de ${D.mensalApi} relativo à API e outro no valor de ${D.mensalSoftware} relativo ao software FOOTLINK.`,
           ),
         ]),
       );
     } else {
+      // Cobre também apiModelo "combinado": o total/mensal já vêm somados
+      // (software + API), então o texto é o mesmo do caso sem API.
       k.push(
         P([
           B("CLÁUSULA SÉTIMA: "),
           R(
-            `Pela configuração e serviços descritos acima, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, parcelados em ${parcelasExtenso} pagamentos fixos de ${D.mensal} ao mês a título de Licença de Uso do software FOOTLINK.`,
+            `Pela configuração e serviços descritos acima, contratado na modalidade anual, o CONTRATANTE pagará à CONTRATADA o valor total de ${D.total}, parcelados em ${numeroParcelas} pagamentos fixos de ${D.mensal} ao mês a título de Licença de Uso do software FOOTLINK.`,
           ),
         ]),
       );
-      // Confirmado idêntico em GOIAS (clube) e ELENKO (agente) — universal
-      // para parcelado sem API, não exclusivo de agente como o script
-      // original assumia (bug pego pelo teste de fidelidade, ver
-      // scripts/test-geracao.ts).
+      // Confirmado contra GOIAS/ELENKO (fidelidade original) e PANTANAL_teste/
+      // ELENKO_teste (linha Scout) — universal pra parcelado sem API.
       k.push(
         P([
-          B("Parágrafo 1º: "),
+          B(proxParagrafoSetima()),
           R(
-            "Para fins deste contrato, a obrigação financeira é assumida de forma integral pelo período de 12 (doze) meses, não se confundindo com a forma de pagamento em parcelamento, mera facilidade concedida ao CONTRATANTE.",
+            "Para fins deste contrato, a obrigação financeira é assumida de forma integral pelo período de 12 (doze) meses, não se confundindo com a forma de pagamento ajustada, que constitui mera facilidade concedida ao CONTRATANTE.",
           ),
         ]),
       );
     }
-    k.push(
-      P([
-        B("CLÁUSULA OITAVA: "),
-        R(`Os pagamentos se darão através de boleto bancário, com vencimento até o dia ${D.diaVenc || "10"} de cada mês, sendo o primeiro vencimento em ${D.primeiroVenc}.`),
-      ]),
-    );
+    if (D.divulgacao === "obrigacao") k.push(...blocoDivulgacaoObrigacao(D, proxParagrafoSetima));
+
+    if (D.metodo === "pix") {
+      k.push(
+        P([
+          B("CLÁUSULA OITAVA: "),
+          R(
+            `Ajustam as partes que os pagamentos se darão através de transferência eletrônica (pix), cabendo ao CONTRATANTE a obrigação de envio imediato do comprovante de pagamento ao e-mail financeiro@footure.com.br, tão logo este seja realizado. O pagamento será realizado até o dia ${D.diaVenc || "25"} de cada mês, com apresentação da nota fiscal, e previsão do primeiro pagamento a partir de ${D.primeiroVenc}, através dos seguintes dados bancários:`,
+          ),
+        ]),
+      );
+      k.push(...pixBankBlock());
+    } else {
+      k.push(
+        P([
+          B("CLÁUSULA OITAVA: "),
+          R(
+            `Em relação à forma e prazo para pagamento, ajustam as partes que o pagamento se dará através de boleto bancário, com vencimento até o dia ${D.diaVenc || "10"} de cada mês, cabendo ao CONTRATANTE a obrigação de efetuar o pagamento no prazo estipulado, sendo o primeiro vencimento pactuado para ${D.primeiroVenc}:`,
+          ),
+        ]),
+      );
+    }
     k.push(parcTable(D.parcelas));
   } else {
     // À vista. Bloco com API discriminada: SEM precedente em contrato real —
     // por analogia ao padrão Corinthians (parcelado+API), adaptado para
     // parcela única. Revisar com jurídico antes de usar em produção.
-    if (D.api && D.mensalApi && D.mensalSoftware) {
+    if (D.api && D.apiModelo === "distintos" && D.mensalApi && D.mensalSoftware) {
       k.push(
         P([
           B("CLÁUSULA SÉTIMA: "),
@@ -663,7 +808,7 @@ export function gerarContrato(D: DadosContrato): Document {
       );
       k.push(
         P([
-          B("Parágrafo 1º: "),
+          B(proxParagrafoSetima()),
           R(
             `Fica estabelecido que serão emitidos boletos bancários distintos, sendo um boleto no valor de ${D.mensalApi} relativo à API e outro no valor de ${D.mensalSoftware} relativo ao software FOOTLINK.`,
           ),
@@ -677,6 +822,8 @@ export function gerarContrato(D: DadosContrato): Document {
         ]),
       );
     }
+    if (D.divulgacao === "obrigacao") k.push(...blocoDivulgacaoObrigacao(D, proxParagrafoSetima));
+
     k.push(
       P([
         B("CLÁUSULA OITAVA: "),
@@ -690,18 +837,18 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("CLÁUSULA NONA: "),
       R(
-        "O não pagamento no prazo implicará juros de mora de 1% ao mês e multa de 2%, incidentes sobre o valor em atraso, com correção pelo IGPM-FGV. O inadimplemento superior a 30 dias autorizará o cancelamento da licença e a suspensão das senhas, a critério da CONTRATADA, sem prejuízo da rescisão prevista na Cláusula Décima Segunda.",
+        `O não pagamento no prazo ajustado implicará a incidência de juros de mora de 1% (um por cento) ao mês e multa de 2% (dois por cento), ambos sobre o valor em atraso, com correção pelo IGPM-FGV até o efetivo pagamento. O inadimplemento superior a 30 (trinta) dias autorizará o imediato cancelamento da licença e a suspensão das senhas de acesso ao Software Footlink${D.api ? " e ao API do FOOTLINK" : ""}, a critério da CONTRATADA, sem prejuízo da rescisão prevista na Cláusula ${ORD[nRescisao]}.`,
       ),
     ]),
   );
 
-  // Divulgação (opcional)
-  if (D.divulga)
+  // Divulgação "simples" — cláusula standalone (desloca a numeração das seguintes)
+  if (D.divulgacao === "simples")
     k.push(
       P([
-        B("CLÁUSULA DÉCIMA: "),
+        B(CL(10)),
         R(
-          "O CONTRATANTE autoriza a CONTRATADA a publicar a prestação dos serviços como referência em suas redes sociais (@FootureFC, @footlink.app, @Footlink), desde que o conteúdo seja prévia e expressamente aprovado pelo CONTRATANTE.",
+          "O CONTRATANTE autoriza à CONTRATADA a publicação da prestação dos serviços como referência em suas redes sociais (Instagram, twitter, facebook e linkedin) @FootureFC, @footlink.app, @Footlink.",
         ),
       ]),
     );
@@ -710,15 +857,15 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(H("DA VIGÊNCIA E DA RESCISÃO"));
   k.push(
     P([
-      B("CLÁUSULA DÉCIMA PRIMEIRA: "),
-      R(`O presente contrato é celebrado por prazo determinado de 12 (doze) meses, iniciando-se em ${D.vigIni} e encerrando-se em ${D.vigFim}, devendo as partes celebrar novo instrumento havendo interesse na continuidade.`),
+      B(CL(nVigencia)),
+      R(`O presente contrato é celebrado por prazo determinado de 12 (doze) meses, iniciando-se em ${D.vigIni} e encerrando-se em ${D.vigFim}, sendo que, findo o período e havendo interesse das partes, deverão celebrar novo instrumento contratual.`),
     ]),
   );
-  k.push(P([B("CLÁUSULA DÉCIMA SEGUNDA: "), R(D.multaTexto)]));
+  k.push(P([B(CL(nRescisao)), R(D.multaTexto)]));
   k.push(
     P([
       B("Parágrafo 1º: "),
-      R("O CONTRATANTE que pretender rescindir deverá formalizar por escrito ao e-mail cancelamentos@footure.com.br, com 30 dias de antecedência."),
+      R("O CONTRATANTE que pretender rescindir ou cancelar sua assinatura deverá formalizar a solicitação exclusivamente por comunicação escrita ao e-mail cancelamentos@footure.com.br, com antecedência mínima de 30 (trinta) dias."),
     ]),
   );
 
@@ -726,8 +873,8 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(H("DA CONFIDENCIALIDADE E EXCLUSIVIDADE"));
   k.push(
     P([
-      B("CLÁUSULA DÉCIMA TERCEIRA: "),
-      R("A CONTRATADA obriga-se a manter em estrito sigilo as informações confidenciais recebidas, e o CONTRATANTE a não divulgar as metodologias e tecnologias da CONTRATADA, mantendo sigilo das informações recebidas."),
+      B(CL(nConfid)),
+      R("A CONTRATADA obriga-se expressamente a manter em estrito sigilo as informações confidenciais recebidas, bem como a não utilizá-las para outros fins. Da mesma forma, o CONTRATANTE obriga-se a não divulgar ou repassar a terceiros as metodologias e tecnologias da CONTRATADA, mantendo sigilo das informações recebidas."),
     ]),
   );
   k.push(
@@ -737,9 +884,24 @@ export function gerarContrato(D: DadosContrato): Document {
     ]),
   );
   k.push(
-    P([B("Parágrafo 2º: "), R("A obrigação de sigilo perdurará durante a vigência e pelo prazo de 05 (cinco) anos a contar do término.")]),
+    P([
+      B("Parágrafo 2º: "),
+      R("Eventual obrigação de sigilo relativa às informações incluídas e/ou extraídas do Software FOOTLINK é de responsabilidade do CONTRATANTE quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança tecnológica."),
+    ]),
   );
-  if (isClube) {
+  k.push(
+    P([
+      B("Parágrafo 3º: "),
+      R("Não há restrição de divulgação quando: a) a informação se torna pública por outra via que não a Parte Receptora; b) é obtida de terceiros com autorização; c) já era de conhecimento prévio da Parte Receptora."),
+    ]),
+  );
+  k.push(
+    P([
+      B("Parágrafo 4º: "),
+      R("É vedada a divulgação de informações confidenciais salvo consentimento expresso, admitido o fornecimento por ordem judicial/administrativa mediante notificação prévia. A disposição perdura durante a vigência e por 05 (cinco) anos após o término."),
+    ]),
+  );
+  if (D.robusta) {
     k.push(...lgpdReforcada());
   } else {
     k.push(
@@ -753,37 +915,45 @@ export function gerarContrato(D: DadosContrato): Document {
   }
   k.push(
     P([
-      B("CLÁUSULA DÉCIMA QUARTA: "),
+      B("Parágrafo 6º: "),
+      R("Serão consideradas confidenciais, ainda, as informações identificadas como tais pelas partes ou que, pela natureza ou circunstâncias da revelação, devam ser assim consideradas."),
+    ]),
+  );
+  k.push(
+    P([
+      B(CL(nExclus)),
       R("O presente contrato não implica qualquer exclusividade entre as partes, podendo cada qual contratar serviços semelhantes junto a terceiros."),
     ]),
   );
 
   // Disposições gerais
   k.push(H("DAS DISPOSIÇÕES GERAIS"));
-  k.push(P([B("CLÁUSULA DÉCIMA QUINTA: "), R("Havendo contradição entre este instrumento e a Proposta Comercial, prevalece este contrato.")]));
+  k.push(
+    P([B(CL(nDisp1)), R("Havendo contradição entre este instrumento e a Proposta Comercial ou qualquer outro documento, prevalecerá o disposto neste contrato.")]),
+  );
   k.push(
     P([
-      B("CLÁUSULA DÉCIMA SEXTA: "),
-      R("As informações do FOOTLINK são obtidas de fontes oficiais e não oficiais públicas lícitas; eventual incorreção não é responsabilidade da CONTRATADA nem justifica rescisão."),
+      B(CL(nDisp2)),
+      R("O CONTRATANTE reconhece que as informações do FOOTLINK são obtidas de fontes oficiais e não oficiais públicas lícitas; eventual incorreção não é responsabilidade da CONTRATADA nem justifica rescisão."),
     ]),
   );
   k.push(
     P([
-      B("CLÁUSULA DÉCIMA SÉTIMA: "),
-      R("Encerrada a vigência sem prorrogação, os dados inseridos serão entregues em arquivo “csv” e, após, excluídos com as senhas e logins."),
+      B(CL(nDisp3)),
+      R("Encerrada a vigência sem prorrogação, as informações inseridas serão entregues em arquivo “csv” e, após, imediatamente excluídas junto com as senhas e logins de acesso."),
     ]),
   );
   k.push(
     P([
-      B("CLÁUSULA DÉCIMA OITAVA: "),
-      R("Este ajuste somente poderá ser alterado por instrumento escrito assinado pelas partes, constituindo o entendimento completo entre elas."),
+      B(CL(nDisp4)),
+      R("Este ajuste somente poderá ser alterado, substituído, rescindido, renovado ou prorrogado por instrumento escrito assinado pelas partes, constituindo o entendimento completo entre elas, obrigando sucessores; eventos de força maior serão comunicados de imediato; a tolerância quanto a atraso não altera as condições pactuadas."),
     ]),
   );
 
   // Foro
   k.push(H("DO FORO"));
   k.push(
-    P([B("CLÁUSULA DÉCIMA NONA: "), R(`Elegem as partes o Foro Central da Comarca de ${D.foro}, para dirimir quaisquer questões oriundas do presente contrato.`)]),
+    P([B(CL(nForo)), R(`Elegem as partes o Foro Central da Comarca de ${D.foro}, para dirimir quaisquer questões oriundas do presente contrato.`)]),
   );
 
   // Assinaturas (página própria)
