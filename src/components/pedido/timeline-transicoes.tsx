@@ -28,11 +28,10 @@ export function TimelineTransicoes({ eventos }: { eventos: EventoTimeline[] }) {
           {i < eventos.length - 1 && <span className="absolute top-3 left-[5px] h-[calc(100%-0.5rem)] w-px bg-border" />}
           <span className="relative z-10 mt-1.5 size-[11px] shrink-0 rounded-full border-2 border-primary bg-card" />
           <div className="flex flex-1 flex-col gap-0.5">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-              <p className="text-sm font-semibold text-foreground">{e.titulo}</p>
-              <p className="text-xs whitespace-nowrap text-muted-foreground">{formatarDataHora(e.data)}</p>
-            </div>
-            <p className="text-xs text-muted-foreground">por {e.nome}</p>
+            <p className="text-sm font-semibold text-foreground">{e.titulo}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatarDataHora(e.data)} · por {e.nome}
+            </p>
             {e.comentario && <p className="mt-1 text-sm text-foreground">{e.comentario}</p>}
           </div>
         </div>
