@@ -20,7 +20,7 @@ import { detectarPlanoLegado } from "@/lib/contratos/legado";
 import { PLANOS_CLUBE, PLANOS_AGENTE } from "@/lib/contratos/planos";
 import { ROTULO_MULTA, textoMultaDefault } from "@/lib/contratos/multa";
 import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
-import type { MultaTipo, MeioPagamento } from "@/lib/supabase/database.types";
+import type { MultaTipo, MeioPagamento, Divulgacao, ApiModelo } from "@/lib/supabase/database.types";
 
 export interface ClienteOption {
   id: string;
@@ -56,7 +56,11 @@ export interface DadosIniciaisPedido {
   convencaoParcelas: "calendario" | "ciclo";
   vigenciaInicio: string;
   vigenciaFim: string;
-  divulgaParceria: boolean;
+  robusta: boolean;
+  divulgacao: Divulgacao;
+  percentualDescontoDivulgacao?: number;
+  postDivulgacao?: string;
+  apiModelo: ApiModelo;
   multaTipo: MultaTipo;
   multaTexto: string;
   foro: string;
@@ -142,7 +146,11 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
   const [convencaoParcelas, setConvencaoParcelas] = useState<"calendario" | "ciclo">(d?.convencaoParcelas ?? "calendario");
   const [vigenciaInicio, setVigenciaInicio] = useState(d?.vigenciaInicio ?? "");
   const [vigenciaFim, setVigenciaFim] = useState(d?.vigenciaFim ?? "");
-  const [divulgaParceria, setDivulgaParceria] = useState(d?.divulgaParceria ?? false);
+  const [robusta, setRobusta] = useState(d?.robusta ?? false);
+  const [divulgacao, setDivulgacao] = useState<Divulgacao>(d?.divulgacao ?? "nenhuma");
+  const [percentualDescontoDivulgacao, setPercentualDescontoDivulgacao] = useState(d?.percentualDescontoDivulgacao ?? 0);
+  const [postDivulgacao, setPostDivulgacao] = useState(d?.postDivulgacao ?? "");
+  const [apiModelo, setApiModelo] = useState<ApiModelo>(d?.apiModelo ?? "distintos");
   const [multaTipo, setMultaTipo] = useState<MultaTipo>(d?.multaTipo ?? "tres_mensalidades");
   const [multaTexto, setMultaTexto] = useState(d?.multaTexto ?? textoMultaDefault("tres_mensalidades"));
   const [foro, setForo] = useState(d?.foro ?? FORO_DEFAULT);
@@ -208,7 +216,11 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
       convencaoParcelas,
       vigenciaInicio,
       vigenciaFim,
-      divulgaParceria,
+      robusta,
+      divulgacao,
+      percentualDescontoDivulgacao: divulgacao === "obrigacao" ? percentualDescontoDivulgacao : undefined,
+      postDivulgacao: divulgacao === "obrigacao" ? postDivulgacao || undefined : undefined,
+      apiModelo: incluiApi ? apiModelo : undefined,
       multaTipo,
       multaTexto,
       foro,
@@ -445,6 +457,18 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
 
           {incluiApi && (
             <div className="grid grid-cols-2 gap-4 rounded-md border p-3">
+              <div className="col-span-2 flex flex-col gap-2">
+                <Label>Modelo de cobrança da API</Label>
+                <Select value={apiModelo} onValueChange={(v) => v && setApiModelo(v as ApiModelo)}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="combinado">Combinado (um boleto só, valor somado)</SelectItem>
+                    <SelectItem value="distintos">Boletos distintos (API e software separados)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex flex-col gap-2">
                 <Label>Valor mensal da API</Label>
                 <Input
@@ -474,7 +498,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
                 />
               </div>
               <p className="col-span-2 text-xs text-muted-foreground">
-                API e software são sempre discriminados no contrato, tanto parcelado quanto à vista.
+                {apiModelo === "distintos"
+                  ? "API e software aparecem discriminados no contrato, cada um com seu boleto."
+                  : "API e software aparecem somados num único valor mensal no contrato."}
               </p>
             </div>
           )}
@@ -602,9 +628,56 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
             <Textarea value={multaTexto} onChange={(e) => setMultaTexto(e.target.value)} rows={3} />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Checkbox checked={divulgaParceria} onCheckedChange={(v) => setDivulgaParceria(!!v)} />
-            <Label>Cliente autoriza divulgação da parceria</Label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Checkbox checked={robusta} onCheckedChange={(v) => setRobusta(!!v)} />
+              <Label>Linhagem robusta</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Só marque se o cliente exigir: SLA de 98%, LGPD reforçada e garantia de features. O padrão (desmarcado)
+              já é o que a maioria dos contratos usa.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Divulgação da parceria</Label>
+            <Select value={divulgacao} onValueChange={(v) => v && setDivulgacao(v as Divulgacao)}>
+              <SelectTrigger className="w-72">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                <SelectItem value="simples">Simples (cliente autoriza citar como referência)</SelectItem>
+                <SelectItem value="obrigacao">Obrigação de fazer (com desconto)</SelectItem>
+              </SelectContent>
+            </Select>
+            {divulgacao === "obrigacao" && (
+              <div className="grid grid-cols-2 gap-4 rounded-md border p-3">
+                <div className="flex flex-col gap-2">
+                  <Label>Percentual de desconto combinado</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={percentualDescontoDivulgacao}
+                    onChange={(e) => setPercentualDescontoDivulgacao(Number(e.target.value))}
+                    onFocus={selecionarConteudo}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    5% se a parcela for menor que R$ 1.000, 10% se for maior ou igual — só narrativo/auditoria, o
+                    valor já descontado é o que você preencheu acima em valor da parcela/total.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Descrição do post (opcional)</Label>
+                  <Textarea
+                    value={postDivulgacao}
+                    onChange={(e) => setPostDivulgacao(e.target.value)}
+                    rows={2}
+                    placeholder="ex.: uma imagem promocional com texto de divulgação da parceria"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">

@@ -4,7 +4,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { DadosContrato, Signatario } from "./gerarContrato";
-import { montarFeatures } from "./planos";
+import { montarFeatures, rotuloScoutPlano } from "./planos";
 import { gerarParcelas } from "./parcelas";
 import { valorFormatadoComExtenso, formatarMoeda } from "./valorPorExtenso";
 import { FORO_DEFAULT } from "@/lib/validacoes/pedido";
@@ -65,6 +65,7 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
 
   return {
     perfil: pedido.perfil,
+    robusta: pedido.robusta,
     cliente: cliente.razao_social,
     cnpj: cliente.cnpj,
     endereco: cliente.endereco,
@@ -72,9 +73,11 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
     testemunhasContratante,
     representantesFooture,
     testemunhasFooture: (testemunhasFooture ?? []).map(paraSignatario),
-    plano: pedido.plano,
+    plano: rotuloScoutPlano(pedido.plano),
     api: pedido.produtos.includes("api"),
+    apiModelo: pedido.api_modelo ?? undefined,
     pagamento: pedido.forma_pagamento,
+    metodo: pedido.meio_pagamento === "pix" ? "pix" : "boleto",
     total: valorFormatadoComExtenso(pedido.valor_total),
     mensal: valorFormatadoComExtenso(pedido.valor_mensal),
     mensalApi: pedido.valor_mensal_api != null ? valorFormatadoComExtenso(pedido.valor_mensal_api) : undefined,
@@ -87,7 +90,9 @@ export async function montarDadosContrato(supabase: Supa, pedidoId: string): Pro
     vencAvista: undefined,
     vigIni: formatarDDMMAAAA(pedido.vigencia_inicio),
     vigFim: formatarDDMMAAAA(pedido.vigencia_fim),
-    divulga: pedido.divulga_parceria,
+    divulgacao: pedido.divulgacao,
+    percentualDesconto: pedido.percentual_desconto_divulgacao ?? undefined,
+    postDivulgacao: pedido.post_divulgacao ?? undefined,
     foro: pedido.foro || FORO_DEFAULT,
     multaTexto: pedido.multa_texto,
     features,
