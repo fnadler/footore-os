@@ -11,6 +11,7 @@ import { LogoCliente } from "@/components/clientes/logo-cliente";
 import { gerarAlertas } from "@/lib/validacoes/pedido";
 import { buscarPlanoPorKey } from "@/lib/plans/normalize";
 import { ROTULO_MEIO_PAGAMENTO } from "@/lib/contratos/meioPagamento";
+import { nomeArquivoContrato } from "@/lib/contratos/nomeArquivo";
 import { RotuloStatus, ROTULO_STATUS } from "@/components/rotulo-status";
 import { PainelAlertas } from "@/components/pedido/painel-alertas";
 import { StepperPedido } from "@/components/pedido/stepper-pedido";
@@ -27,13 +28,6 @@ function formatarMoeda(v: number | null) {
 }
 function formatarData(iso: string) {
   return new Date(iso).toLocaleString("pt-BR");
-}
-/** "{Razão social} - Contrato Footlink - {AAAA-MM-DD} - {versão}.docx" — nome de
- * download (não é o path no Storage, que continua {pedidoId}/v{versao}.docx). */
-function nomeArquivoContrato(razaoSocial: string, geradoEm: string, versao: number): string {
-  const data = geradoEm.slice(0, 10); // gerado_em é timestamptz — os 10 primeiros chars já são AAAA-MM-DD
-  const nomeSanitizado = razaoSocial.replace(/[\\/:*?"<>|]/g, "-").trim();
-  return `${nomeSanitizado} - Contrato Footlink - ${data} - ${versao}.docx`;
 }
 /** vigencia_inicio/fim vêm como "aaaa-mm-dd" (coluna `date`) — divide a string em vez de
  * usar Date pra não sofrer o deslocamento de fuso horário do parse UTC-meia-noite. */

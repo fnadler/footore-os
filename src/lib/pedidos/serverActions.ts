@@ -314,10 +314,10 @@ export async function rejeitarContratoAction(pedidoId: string, comentario: strin
   revalidatePath(`/pedidos/${pedidoId}`);
 }
 
-export async function enviarParaAssinaturaStubAction(pedidoId: string) {
+export async function enviarParaAssinaturaAction(pedidoId: string) {
   await exigirPapel("juridico", "admin");
   const supabase = await createClient();
-  await acoes.enviarParaAssinaturaStub(supabase, pedidoId);
+  await acoes.enviarPedidoParaAssinatura(supabase, pedidoId);
   revalidatePath(`/pedidos/${pedidoId}`);
 }
 

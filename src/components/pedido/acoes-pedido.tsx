@@ -22,7 +22,7 @@ import {
   tentarGerarNovamenteAction,
   liberarParaAssinaturaAction,
   rejeitarContratoAction,
-  enviarParaAssinaturaStubAction,
+  enviarParaAssinaturaAction,
   enviarParaAprovacaoAction,
   cancelarAssinaturaAction,
 } from "@/lib/pedidos/serverActions";
@@ -156,7 +156,7 @@ export function AcoesPedido({
       <div className="flex flex-wrap gap-2">
         <Button
           disabled={pendente}
-          onClick={() => rodar(() => enviarParaAssinaturaStubAction(pedidoId), "Marcado como enviado para assinatura (stub — Fase 3).")}
+          onClick={() => rodar(() => enviarParaAssinaturaAction(pedidoId), "Enviado para assinatura via Clicksign.")}
         >
           Enviar para assinatura
         </Button>

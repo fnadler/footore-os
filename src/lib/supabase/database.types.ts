@@ -252,6 +252,8 @@ export interface Database {
           gerado_por: string;
           motivo_versao: string | null;
           status_revisao: StatusRevisaoContrato;
+          clicksign_envelope_id: string | null;
+          arquivo_assinado_path: string | null;
         },
         {
           id?: string;
@@ -261,8 +263,10 @@ export interface Database {
           gerado_por: string;
           motivo_versao?: string | null;
           status_revisao?: StatusRevisaoContrato;
+          clicksign_envelope_id?: string | null;
+          arquivo_assinado_path?: string | null;
         },
-        { status_revisao?: StatusRevisaoContrato }
+        { status_revisao?: StatusRevisaoContrato; clicksign_envelope_id?: string | null; arquivo_assinado_path?: string | null }
       >;
       transicoes: TableDef<
         {

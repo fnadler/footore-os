@@ -158,8 +158,10 @@ export async function rejeitarContrato(supabase: Supa, pedidoId: string, ator: s
   await tentarGerarContrato(supabase, pedidoId, ator);
 }
 
-/** PRONTO_PARA_ASSINATURA -> ENVIADO_PARA_ASSINATURA. Stub Fase 3 — só transiciona e registra a intenção. */
-export async function enviarParaAssinaturaStub(supabase: Supa, pedidoId: string, comentario?: string) {
+/** PRONTO_PARA_ASSINATURA -> ENVIADO_PARA_ASSINATURA. Cria o envelope na Clicksign
+ * (documento + signatários + requirements) e só then registra a transição — se o
+ * envio falhar, o pedido permanece em PRONTO_PARA_ASSINATURA. */
+export async function enviarPedidoParaAssinatura(supabase: Supa, pedidoId: string, comentario?: string) {
   const { data: contrato } = await supabase
     .from("contratos")
     .select("id, arquivo_path")
@@ -169,10 +171,10 @@ export async function enviarParaAssinaturaStub(supabase: Supa, pedidoId: string,
     .single();
 
   if (contrato) {
-    await enviarParaAssinatura({ contratoId: contrato.id, pedidoId, arquivoPath: contrato.arquivo_path });
+    await enviarParaAssinatura(supabase, { contratoId: contrato.id, pedidoId, arquivoPath: contrato.arquivo_path });
   }
 
-  await registrarTransicao(supabase, pedidoId, "enviado_para_assinatura", comentario ?? "Envio para assinatura (stub Fase 3).");
+  await registrarTransicao(supabase, pedidoId, "enviado_para_assinatura", comentario ?? "Enviado para assinatura via Clicksign.");
 }
 
 /** Vendedor editou um pedido além do rascunho — reabre o fluxo do zero em vez de deixar
