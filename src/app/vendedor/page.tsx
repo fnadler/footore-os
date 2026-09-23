@@ -32,7 +32,7 @@ export default async function VendedorPage() {
           <TableHeader>
             <TableRow>
               <TableHead />
-              <TableHead>Cliente</TableHead>
+              <TableHead className="whitespace-normal">Cliente</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Valor total</TableHead>
               <TableHead>Status</TableHead>
@@ -47,7 +47,7 @@ export default async function VendedorPage() {
                   <TableCell>
                     <LogoCliente url={urlLogoCliente(supabase, cliente?.logo_path ?? null)} nome={cliente?.razao_social ?? "Cliente"} />
                   </TableCell>
-                  <TableCell>{cliente?.razao_social ?? "—"}</TableCell>
+                  <TableCell className="max-w-[240px] whitespace-normal break-words">{cliente?.razao_social ?? "—"}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
                       {p.perfil}

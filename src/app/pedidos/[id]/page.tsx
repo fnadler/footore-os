@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Building2, Package, Users, FileStack, History } from "lucide-react";
+import { Building2, Package, Users, FileStack, History, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
 import { buscarPedidoDetalhe } from "@/lib/pedidos/consultas";
@@ -119,7 +119,10 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
         <div className="flex items-center gap-3">
           <RotuloStatus status={pedido.status} />
           {sessao.papel === "vendedor" && donoDoRascunho && pedidoEhEditavel(pedido.status) && (
-            <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/vendedor/${pedido.id}/editar`}>Editar</Link>} />
+            <Button variant="secondary" size="sm" nativeButton={false} render={<Link href={`/vendedor/${pedido.id}/editar`} />}>
+              <Pencil className="size-4" />
+              Editar
+            </Button>
           )}
           {podeCancelar && <CancelarPedidoDialog pedidoId={pedido.id} />}
         </div>
