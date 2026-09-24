@@ -367,6 +367,25 @@ export interface Database {
         { id?: string; access_token?: string | null; config?: Record<string, unknown> },
         Partial<{ access_token: string | null; config: Record<string, unknown> }>
       >;
+      configuracoes_comissionamento: TableDef<
+        {
+          id: true;
+          percentual_imposto: number;
+          percentual_comissao_total: number;
+          percentual_comissao_sdr: number;
+          percentual_comissao_closer: number;
+          atualizado_por: string | null;
+          atualizado_em: string;
+        },
+        never,
+        Partial<{
+          percentual_imposto: number;
+          percentual_comissao_total: number;
+          percentual_comissao_sdr: number;
+          percentual_comissao_closer: number;
+          atualizado_por: string | null;
+        }>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
