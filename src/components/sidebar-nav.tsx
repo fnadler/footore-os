@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, FileCheck2, CheckSquare, Users, Settings, Building2, type LucideIcon } from "lucide-react";
+import { ClipboardList, FileCheck2, CheckSquare, Users, Settings, Building2, FilePlus2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PapelUsuario } from "@/lib/supabase/database.types";
 
@@ -44,6 +44,7 @@ const GRUPOS_POR_PAPEL: Record<PapelUsuario, SidebarGroup[]> = {
       label: "Administração",
       links: [
         { href: "/admin", label: "Aprovação", icon: CheckSquare, exact: true },
+        { href: "/vendedor/novo", label: "Novo pedido", icon: FilePlus2 },
         { href: "/clientes", label: "Clientes", icon: Building2 },
         { href: "/admin/usuarios", label: "Usuários", icon: Users, exact: true },
         { href: "/admin/configuracoes", label: "Configurações", icon: Settings, exact: true },

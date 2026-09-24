@@ -63,6 +63,8 @@ const PedidoPayloadSchema = z.object({
   testemunhasCliente: z.array(SignatarioSchema),
   representantesFootureIds: z.array(z.string().uuid()),
   testemunhasFooture: z.array(SignatarioSchema),
+  sdrId: z.string().uuid(),
+  closerId: z.string().uuid(),
 });
 
 export type PedidoPayload = z.infer<typeof PedidoPayloadSchema>;
@@ -73,7 +75,7 @@ export interface SalvarPedidoState {
 
 /** Cria (ou atualiza, se pedidoId vier no payload) um pedido em RASCUNHO. */
 export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData): Promise<SalvarPedidoState> {
-  const sessao = await exigirPapel("vendedor");
+  const sessao = await exigirPapel("vendedor", "admin");
   const bruto = JSON.parse(String(formData.get("payload") ?? "{}"));
   const parsed = PedidoPayloadSchema.safeParse(bruto);
   if (!parsed.success) {
@@ -175,6 +177,8 @@ export async function salvarPedido(_prev: SalvarPedidoState, formData: FormData)
     condicao_especial: payload.condicaoEspecial || null,
     plano_legado_detectado: !!payload.planoLegadoNomeOriginal,
     plano_legado_nome_original: payload.planoLegadoNomeOriginal || null,
+    sdr_id: payload.sdrId,
+    closer_id: payload.closerId,
   };
 
   let pedidoId = payload.pedidoId;
@@ -268,7 +272,7 @@ async function salvarSignatariosDoPedido(
 }
 
 export async function enviarParaAprovacaoAction(pedidoId: string) {
-  await exigirPapel("vendedor");
+  await exigirPapel("vendedor", "admin");
   const supabase = await createClient();
   await acoes.enviarParaAprovacao(supabase, pedidoId);
   revalidatePath("/vendedor");

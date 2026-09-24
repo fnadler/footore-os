@@ -26,7 +26,9 @@ export async function listarPedidosDoVendedor(supabase: Supa, vendedorId: string
 export async function listarFilaAprovacao(supabase: Supa) {
   const { data, error } = await supabase
     .from("pedidos")
-    .select("id, status, perfil, plano, valor_total, criado_em, clientes(razao_social, logo_path), profiles(nome)")
+    .select(
+      "id, status, perfil, plano, valor_total, criado_em, clientes(razao_social, logo_path), profiles!pedidos_vendedor_id_profiles_fkey(nome)",
+    )
     .eq("status", "em_aprovacao")
     .order("criado_em", { ascending: true });
   logSeErro("listarFilaAprovacao", error);
@@ -56,7 +58,9 @@ export async function listarFilaJuridico(supabase: Supa) {
 export async function buscarPedidoDetalhe(supabase: Supa, pedidoId: string) {
   const { data: pedido, error: erroPedido } = await supabase
     .from("pedidos")
-    .select("*, clientes(*), profiles(nome)")
+    .select(
+      "*, clientes(*), profiles!pedidos_vendedor_id_profiles_fkey(nome), sdr:profiles!pedidos_sdr_id_fkey(nome), closer:profiles!pedidos_closer_id_fkey(nome)",
+    )
     .eq("id", pedidoId)
     .single();
   logSeErro(`buscarPedidoDetalhe(${pedidoId})`, erroPedido);
@@ -123,5 +127,13 @@ export async function listarRepresentantesFooture(supabase: Supa) {
 export async function listarUsuarios(supabase: Supa) {
   const { data, error } = await supabase.from("profiles").select("*").order("nome");
   logSeErro("listarUsuarios", error);
+  return data ?? [];
+}
+
+// SDR e Closer do pedido podem ser qualquer vendedor ou admin (não só quem
+// tem o pedido) — jurídico fica de fora, não faz sentido pra atribuição de venda.
+export async function listarUsuariosParaAtribuicaoVenda(supabase: Supa) {
+  const { data, error } = await supabase.from("profiles").select("*").in("papel", ["vendedor", "admin"]).order("nome");
+  logSeErro("listarUsuariosParaAtribuicaoVenda", error);
   return data ?? [];
 }

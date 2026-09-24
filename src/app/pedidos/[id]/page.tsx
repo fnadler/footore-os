@@ -55,11 +55,15 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
   } | null;
   const logoClienteUrl = urlLogoCliente(supabase, cliente?.logo_path ?? null);
   const vendedorNome = (pedido.profiles as unknown as { nome: string } | null)?.nome;
+  const sdrNome = (pedido.sdr as unknown as { nome: string } | null)?.nome;
+  const closerNome = (pedido.closer as unknown as { nome: string } | null)?.nome;
   const planoLabel = buscarPlanoPorKey(pedido.plano)?.canonical ?? pedido.plano;
 
   const representantesLegais = signatarios.filter((s) => s.tipo === "representante_legal");
   const testemunhasCliente = signatarios.filter((s) => s.tipo === "testemunha");
   const donoDoRascunho = pedido.vendedor_id === sessao.id;
+  const podeEditar =
+    pedidoEhEditavel(pedido.status) && (sessao.papel === "admin" || (sessao.papel === "vendedor" && donoDoRascunho));
   const podeCancelar =
     pedido.status !== "concluido" &&
     pedido.status !== "cancelado" &&
@@ -122,7 +126,7 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
         </div>
         <div className="flex items-center gap-3">
           <RotuloStatus status={pedido.status} />
-          {sessao.papel === "vendedor" && donoDoRascunho && pedidoEhEditavel(pedido.status) && (
+          {podeEditar && (
             <Button variant="secondary" size="sm" nativeButton={false} render={<Link href={`/vendedor/${pedido.id}/editar`} />}>
               <Pencil className="size-4" />
               Editar
@@ -170,6 +174,8 @@ export default async function DetalhePedidoPage({ params }: PageProps<"/pedidos/
             />
             <InfoRow label="Valor da parcela" value={formatarMoeda(pedido.valor_mensal)} />
             <InfoRow label="Valor total" value={formatarMoeda(pedido.valor_total)} />
+            <InfoRow label="SDR" value={sdrNome} />
+            <InfoRow label="Closer" value={closerNome} />
             {pedido.produtos.includes("api") && (
               <InfoRow
                 label="API / Software"

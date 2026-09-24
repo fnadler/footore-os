@@ -1,12 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
-import { listarClientes, listarRepresentantesFooture, listarSignatariosDoCliente } from "@/lib/pedidos/consultas";
+import {
+  listarClientes,
+  listarRepresentantesFooture,
+  listarSignatariosDoCliente,
+  listarUsuariosParaAtribuicaoVenda,
+} from "@/lib/pedidos/consultas";
 import { PedidoForm } from "@/components/pedido/pedido-form";
 
 export default async function NovoPedidoPage() {
   const supabase = await createClient();
-  const [clientes, representantesFooture] = await Promise.all([
+  const [clientes, representantesFooture, usuarios] = await Promise.all([
     listarClientes(supabase),
     listarRepresentantesFooture(supabase),
+    listarUsuariosParaAtribuicaoVenda(supabase),
   ]);
 
   const signatariosPorCliente: Record<string, { id: string; nomeCompleto: string; email: string; cpf: string }[]> = {};
@@ -29,6 +35,7 @@ export default async function NovoPedidoPage() {
         clientes={clientes.map((c) => ({ id: c.id, tipo: c.tipo, razaoSocial: c.razao_social, cnpj: c.cnpj, endereco: c.endereco }))}
         signatariosPorCliente={signatariosPorCliente}
         representantesFooture={representantesFooture.map((r) => ({ id: r.id, nome: r.nome }))}
+        usuarios={usuarios.map((u) => ({ id: u.user_id, nome: u.nome }))}
       />
     </div>
   );

@@ -150,6 +150,8 @@ export interface Database {
           plano_legado_nome_original: string | null;
           geracao_contrato_erro: string | null;
           bling_pedido_id: string | null;
+          sdr_id: string | null;
+          closer_id: string | null;
           criado_em: string;
           atualizado_em: string;
         },
@@ -189,6 +191,8 @@ export interface Database {
           plano_legado_nome_original?: string | null;
           geracao_contrato_erro?: string | null;
           bling_pedido_id?: string | null;
+          sdr_id?: string | null;
+          closer_id?: string | null;
         },
         Partial<{
           cliente_id: string;
@@ -225,6 +229,8 @@ export interface Database {
           plano_legado_nome_original: string | null;
           geracao_contrato_erro: string | null;
           bling_pedido_id: string | null;
+          sdr_id: string | null;
+          closer_id: string | null;
         }>
       >;
       pedido_signatarios: TableDef<

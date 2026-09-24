@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState, type FocusEvent } from "react";
-import { Building2, Package, CreditCard, CalendarRange, ScrollText, Users } from "lucide-react";
+import { Building2, Package, CreditCard, CalendarRange, ScrollText, Users, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,10 @@ export interface ClienteOption {
   endereco: string;
 }
 export interface RepresentanteFoutureOption {
+  id: string;
+  nome: string;
+}
+export interface UsuarioOption {
   id: string;
   nome: string;
 }
@@ -68,12 +72,15 @@ export interface DadosIniciaisPedido {
   testemunhasCliente: SignatarioForm[];
   representantesFootureIds: string[];
   testemunhasFooture: SignatarioForm[];
+  sdrId: string;
+  closerId: string;
 }
 
 interface Props {
   clientes: ClienteOption[];
   signatariosPorCliente: Record<string, SignatarioForm[]>;
   representantesFooture: RepresentanteFoutureOption[];
+  usuarios: UsuarioOption[];
   pedidoId?: string;
   dadosIniciais?: DadosIniciaisPedido;
 }
@@ -101,7 +108,7 @@ function somarMeses(dataISO: string, meses: number): string {
 
 const ESTADO_INICIAL: SalvarPedidoState = {};
 
-export function PedidoForm({ clientes, signatariosPorCliente, representantesFooture, pedidoId, dadosIniciais: d }: Props) {
+export function PedidoForm({ clientes, signatariosPorCliente, representantesFooture, usuarios, pedidoId, dadosIniciais: d }: Props) {
   const [estado, formAction, pendente] = useActionState(salvarPedido, ESTADO_INICIAL);
 
   const [clienteId, setClienteId] = useState<string>(d?.clienteId ?? "");
@@ -115,6 +122,9 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
     endereco: "",
   });
   const [previewLogoNovoCliente, setPreviewLogoNovoCliente] = useState<string | null>(null);
+
+  const [sdrId, setSdrId] = useState(d?.sdrId ?? "");
+  const [closerId, setCloserId] = useState(d?.closerId ?? "");
 
   const clienteSelecionado = clientes.find((c) => c.id === clienteId);
   const perfil: "clube" | "agente" = cadastrandoNovo ? novoCliente.tipo : (clienteSelecionado?.tipo ?? "clube");
@@ -242,6 +252,8 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
       testemunhasCliente,
       representantesFootureIds,
       testemunhasFooture,
+      sdrId,
+      closerId,
     };
     formData.set("payload", JSON.stringify(payload));
     return formAction(formData);
@@ -748,6 +760,41 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
           </div>
 
           <SignatarioListEditor titulo="Testemunhas da Footure" itens={testemunhasFooture} onChange={setTestemunhasFooture} />
+        </BlocoFormulario>
+
+        <BlocoFormulario numero={7} titulo="SDR e Closer" descricao="Definem a comissão de cada um sobre esse pedido — podem ser a mesma pessoa." icon={Handshake}>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label>SDR</Label>
+              <Select value={sdrId} onValueChange={(v) => v && setSdrId(v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Closer</Label>
+              <Select value={closerId} onValueChange={(v) => v && setCloserId(v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </BlocoFormulario>
       </div>
 

@@ -1,22 +1,29 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/auth/session";
-import { buscarPedidoDetalhe, listarClientes, listarRepresentantesFooture, listarSignatariosDoCliente } from "@/lib/pedidos/consultas";
+import {
+  buscarPedidoDetalhe,
+  listarClientes,
+  listarRepresentantesFooture,
+  listarSignatariosDoCliente,
+  listarUsuariosParaAtribuicaoVenda,
+} from "@/lib/pedidos/consultas";
 import { pedidoEhEditavel } from "@/lib/pedidos/statusEditavel";
 import { PedidoForm, type DadosIniciaisPedido } from "@/components/pedido/pedido-form";
 
 export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/[id]/editar">) {
   const { id } = await params;
-  const sessao = await exigirPapel("vendedor");
+  const sessao = await exigirPapel("vendedor", "admin");
   const supabase = await createClient();
 
   const detalhe = await buscarPedidoDetalhe(supabase, id);
-  if (!detalhe || detalhe.pedido.vendedor_id !== sessao.id) notFound();
+  if (!detalhe || (detalhe.pedido.vendedor_id !== sessao.id && sessao.papel !== "admin")) notFound();
   if (!pedidoEhEditavel(detalhe.pedido.status)) notFound();
 
-  const [clientes, representantesFooture] = await Promise.all([
+  const [clientes, representantesFooture, usuarios] = await Promise.all([
     listarClientes(supabase),
     listarRepresentantesFooture(supabase),
+    listarUsuariosParaAtribuicaoVenda(supabase),
   ]);
 
   const signatariosPorCliente: Record<string, { id: string; nomeCompleto: string; email: string; cpf: string }[]> = {};
@@ -75,6 +82,8 @@ export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/
       .map((r) => (r.representantes_footure as unknown as { id: string } | null)?.id)
       .filter((id): id is string => !!id),
     testemunhasFooture: testemunhasFooture.map((t) => ({ nomeCompleto: t.nome_completo, email: t.email, cpf: t.cpf })),
+    sdrId: pedido.sdr_id ?? "",
+    closerId: pedido.closer_id ?? "",
   };
 
   return (
@@ -90,6 +99,7 @@ export default async function EditarPedidoPage({ params }: PageProps<"/vendedor/
         clientes={clientes.map((c) => ({ id: c.id, tipo: c.tipo, razaoSocial: c.razao_social, cnpj: c.cnpj, endereco: c.endereco }))}
         signatariosPorCliente={signatariosPorCliente}
         representantesFooture={representantesFooture.map((r) => ({ id: r.id, nome: r.nome }))}
+        usuarios={usuarios.map((u) => ({ id: u.user_id, nome: u.nome }))}
         dadosIniciais={dadosIniciais}
       />
     </div>
