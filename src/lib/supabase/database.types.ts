@@ -48,9 +48,9 @@ export interface Database {
   public: {
     Tables: {
       profiles: TableDef<
-        { user_id: string; nome: string; papel: PapelUsuario; criado_em: string },
-        { user_id: string; nome: string; papel?: PapelUsuario },
-        { nome?: string; papel?: PapelUsuario }
+        { user_id: string; nome: string; papel: PapelUsuario; ativo: boolean; criado_em: string },
+        { user_id: string; nome: string; papel?: PapelUsuario; ativo?: boolean },
+        { nome?: string; papel?: PapelUsuario; ativo?: boolean }
       >;
       clientes: TableDef<
         {

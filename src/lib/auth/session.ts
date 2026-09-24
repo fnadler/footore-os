@@ -21,11 +21,13 @@ export async function obterSessao(): Promise<SessaoUsuario | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nome, papel")
+    .select("nome, papel, ativo")
     .eq("user_id", user.id)
     .single();
 
-  if (!profile) return null;
+  // Usuário inativo trata como não-logado — pega sessões que já existiam
+  // antes da inativação (o login em si também barra antes de chegar aqui).
+  if (!profile || !profile.ativo) return null;
 
   return { id: user.id, email: user.email ?? null, nome: profile.nome, papel: profile.papel };
 }

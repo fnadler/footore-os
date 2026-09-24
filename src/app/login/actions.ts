@@ -16,10 +16,16 @@ export async function entrar(_prev: LoginState, formData: FormData): Promise<Log
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
   if (error) {
     return { erro: "E-mail ou senha inválidos." };
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("ativo").eq("user_id", data.user.id).single();
+  if (!profile?.ativo) {
+    await supabase.auth.signOut();
+    return { erro: "Esta conta está inativa. Fale com um administrador." };
   }
 
   // Redireciona para "/", que decide a área por papel (ver src/app/page.tsx).
