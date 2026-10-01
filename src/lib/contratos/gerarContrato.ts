@@ -249,22 +249,26 @@ function pixBankBlock(): Paragraph[] {
   return linhas.map((l) => new Paragraph({ spacing: { after: 0 }, alignment: AlignmentType.LEFT, children: [B(l)] }));
 }
 
-// ---------- divulgação "obrigação de fazer" (§§ da Cláusula Sétima) ----------
-// Só narrativa — o desconto (5% parcela < R$1.000, 10% se ≥, sempre informado no
-// pedido) já está refletido em D.total/D.mensal; não recalcula nada aqui.
+// ---------- divulgação "obrigação de fazer" = divulgação mútua (§§ da Cláusula Sétima) ----------
+// Revisão jurídica (set/2026): o desconto é um campo opcional dentro dessa mesma
+// opção, não um requisito — por isso o texto não amarra mais a divulgação ao
+// "preço"/"obrigação de fazer" (se o vendedor não preencher desconto, a cláusula
+// sai igual, só sem desconto real aplicado). O desconto em si (5% parcela <
+// R$1.000, 10% se ≥, quando combinado) já está refletido em D.total/D.mensal;
+// não recalcula nada aqui, é só narrativa/auditoria.
 function blocoDivulgacaoObrigacao(D: DadosContrato, proxParagrafo: () => string): Paragraph[] {
   const post = D.postDivulgacao || "uma imagem promocional com texto de divulgação da parceria a ser aprovado entre as partes";
   return [
     P([
       B(proxParagrafo()),
       R(
-        `Além do valor acima, constitui o preço pelo objeto do presente contrato a seguinte obrigação de fazer: em data a ser ajustada entre os departamentos de comunicação e marketing das partes, o CONTRATANTE irá publicar nas suas redes sociais (Instagram, twitter, facebook e linkedin), marcando “@FootureFC”, “@footlink.app” e “@Footlink_”, ${post}.`,
+        `As partes ajustam que, em data a ser definida entre os departamentos de comunicação e marketing de ambas, o CONTRATANTE irá publicar nas suas redes sociais (Instagram, twitter, facebook e linkedin), marcando “@FootureFC”, “@footlink.app” e “@Footlink_”, ${post}.`,
       ),
     ]),
     P([
       B(proxParagrafo()),
       R(
-        "Da mesma forma, o CONTRATANTE autoriza à CONTRATADA a publicação da imagem e texto nas redes sociais (Instagram, twitter, facebook e linkedin) @FootureFC, @footlink.app, @Footlink.",
+        "Da mesma forma, o CONTRATANTE autoriza à CONTRATADA a publicação da imagem e texto em seu site e nas redes sociais (Instagram, twitter, facebook e linkedin) @FootureFC, @footlink.app, @Footlink.",
       ),
     ]),
   ];
@@ -864,7 +868,7 @@ export function gerarContrato(D: DadosContrato): Document {
       P([
         B(CL(10)),
         R(
-          "O CONTRATANTE autoriza à CONTRATADA a publicação da prestação dos serviços como referência em suas redes sociais (Instagram, twitter, facebook e linkedin) @FootureFC, @footlink.app, @Footlink.",
+          "O CONTRATANTE autoriza à CONTRATADA a publicação da prestação dos serviços como referência em seu site e em suas redes sociais (Instagram, twitter, facebook e linkedin) @FootureFC, @footlink.app, @Footlink.",
         ),
       ]),
     );

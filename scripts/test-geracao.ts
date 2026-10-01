@@ -251,6 +251,8 @@ const PANTANAL: CasoTeste = {
     dataGeracao: new Date(2026, 2, 20), // 20/03/2026
   },
   divergenciasAceitas: [
+    "Cláusula Décima (divulgação 'simples') ganha 'em seu site e' antes de 'em suas redes sociais' — revisão " +
+      "jurídica estendendo a autorização de menção também ao site da Footure, não só redes sociais.",
     "Confidencialidade (revisão jurídica, contrato Londrina, set/2026): Parágrafo 1º reescrito (redação mais " +
       "completa), Parágrafo 2º perde o trecho 'quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança " +
       "tecnológica', Parágrafo 4º ganha a exceção de domínio público/posse lícita prévia — PANTANAL_teste.docx é " +

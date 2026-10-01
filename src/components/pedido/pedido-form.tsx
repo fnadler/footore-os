@@ -688,7 +688,7 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
               <SelectContent>
                 <SelectItem value="nenhuma">Nenhuma</SelectItem>
                 <SelectItem value="simples">Simples (cliente autoriza citar como referência)</SelectItem>
-                <SelectItem value="obrigacao">Obrigação de fazer (com desconto)</SelectItem>
+                <SelectItem value="obrigacao">Divulgação mútua (desconto opcional)</SelectItem>
               </SelectContent>
             </Select>
             {divulgacao === "obrigacao" && (
