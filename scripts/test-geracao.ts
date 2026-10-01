@@ -250,7 +250,18 @@ const PANTANAL: CasoTeste = {
     parcelas: gerarParcelas("25/08/2026", 12, "ciclo"),
     dataGeracao: new Date(2026, 2, 20), // 20/03/2026
   },
-  divergenciasAceitas: [],
+  divergenciasAceitas: [
+    "Confidencialidade (revisão jurídica, contrato Londrina, set/2026): Parágrafo 1º reescrito (redação mais " +
+      "completa), Parágrafo 2º perde o trecho 'quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança " +
+      "tecnológica', Parágrafo 4º ganha a exceção de domínio público/posse lícita prévia — PANTANAL_teste.docx é " +
+      "anterior a essa revisão.",
+    "Disposições gerais ganham uma cláusula nova de tolerância/renúncia (entre a de 'instrumento escrito' e o " +
+      "Foro) — desloca o Foro de Cláusula Décima Nona pra Vigésima; a cláusula de 'instrumento escrito' também " +
+      "ganha o trecho 'e substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos'.",
+    "Cláusula Oitava ganha um 'Parágrafo único' novo sobre pagamento antecipado/vigência inicial da licença — " +
+      "aditivo (não aparece como divergência no diff, que só reporta linha do modelo ausente no gerado), citado " +
+      "aqui só pra rastreabilidade.",
+  ],
 };
 
 const ELENKO_TESTE: CasoTeste = {
@@ -295,6 +306,14 @@ const ELENKO_TESTE: CasoTeste = {
       "do documento original observada no caso ELENKO antigo); o gerador segue a convenção gramatical padrão com vírgula",
     "bloco de assinatura mostra o nome dos 2 representantes cadastrados em vez de só 'ELENKO SPORTS LTDA' — " +
       "capacidade nova pedida explicitamente (N representantes assináveis, necessária pra Fase 3/Clicksign)",
+    "Confidencialidade (revisão jurídica, contrato Londrina, set/2026): Parágrafo 1º reescrito, Parágrafo 2º perde " +
+      "o trecho 'quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança tecnológica', Parágrafo 4º " +
+      "ganha a exceção de domínio público/posse lícita prévia — ELENKO_teste.docx é anterior a essa revisão.",
+    "Disposições gerais ganham a cláusula nova de tolerância/renúncia — desloca o Foro de Cláusula Décima Oitava " +
+      "pra Décima Nona; a cláusula de 'instrumento escrito' (Décima Sétima aqui, divulgação='nenhuma' não desloca) " +
+      "ganha o trecho 'e substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos'.",
+    "Cláusula Oitava ganha o 'Parágrafo único' novo sobre pagamento antecipado/vigência inicial — aditivo, citado " +
+      "aqui só pra rastreabilidade (não aparece no diff).",
   ],
 };
 

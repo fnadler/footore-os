@@ -169,7 +169,10 @@ export function PedidoForm({ clientes, signatariosPorCliente, representantesFoot
   const [vigenciaInicio, setVigenciaInicio] = useState(d?.vigenciaInicio ?? "");
   const [vigenciaFim, setVigenciaFim] = useState(d?.vigenciaFim ?? "");
   const [robusta, setRobusta] = useState(d?.robusta ?? false);
-  const [divulgacao, setDivulgacao] = useState<Divulgacao>(d?.divulgacao ?? "nenhuma");
+  // Padrão "simples" (revisão jurídica, set/2026): a cláusula de autorização de
+  // divulgação deve constar por padrão, retirada só a pedido do cliente — "nenhuma"
+  // vira uma escolha explícita do vendedor, não o caminho de menor esforço.
+  const [divulgacao, setDivulgacao] = useState<Divulgacao>(d?.divulgacao ?? "simples");
   const [percentualDescontoDivulgacao, setPercentualDescontoDivulgacao] = useState(d?.percentualDescontoDivulgacao ?? 0);
   const [postDivulgacao, setPostDivulgacao] = useState(d?.postDivulgacao ?? "");
   const [apiModelo, setApiModelo] = useState<ApiModelo>(d?.apiModelo ?? "distintos");

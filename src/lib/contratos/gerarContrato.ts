@@ -559,7 +559,8 @@ export function gerarContrato(D: DadosContrato): Document {
   const nDisp2 = nDisp1 + 1;
   const nDisp3 = nDisp2 + 1;
   const nDisp4 = nDisp3 + 1;
-  const nForo = nDisp4 + 1;
+  const nDisp5 = nDisp4 + 1;
+  const nForo = nDisp5 + 1;
 
   k.push(H("INSTRUMENTO PARTICULAR DE USO DO SOFTWARE FOOTLINK"));
 
@@ -793,6 +794,21 @@ export function gerarContrato(D: DadosContrato): Document {
       );
     }
     k.push(parcTable(D.parcelas));
+    // Revisão jurídica (contrato Londrina, set/2026): sem isso, o texto abre
+    // margem pra interpretação de cobrança postecipada (uso prévio sem
+    // quitação garantida). D.parcelas[0].periodo já calcula a data certa
+    // (vencimento da 1ª parcela até vencimento+1 mês-1 dia), igual ao
+    // exemplo revisado — não precisa recalcular aqui.
+    if (D.parcelas[0]) {
+      k.push(
+        P([
+          B("Parágrafo único: "),
+          R(
+            `As PARTES reconhecem e ajustam que a licença de uso do software é disponibilizada mediante pagamento antecipado das mensalidades, correspondendo cada parcela ao período de licenciamento imediatamente subsequente ao seu vencimento. Considerando que o acesso ao sistema foi disponibilizado à CONTRATANTE em ${D.primeiroVenc}, data em que ocorreu o pagamento da primeira parcela, fica estabelecido que a vigência inicial da licença compreenderá o período de ${D.parcelas[0].periodo}, sendo as demais parcelas destinadas à manutenção da licença de uso dos períodos subsequentes, observados os vencimentos previstos neste instrumento.`,
+          ),
+        ]),
+      );
+    }
   } else {
     // À vista. Bloco com API discriminada: SEM precedente em contrato real —
     // por analogia ao padrão Corinthians (parcelado+API), adaptado para
@@ -880,13 +896,15 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B("Parágrafo 1º: "),
-      R("As Partes tratarão como sigilosas todas as informações confidenciais a que tiverem acesso, em especial dados pessoais e informações técnicas, estratégicas, econômicas ou de mercado."),
+      R(
+        "As Partes concordam em tratar como sigilosas e confidenciais todas as eventuais informações escritas, orais ou de qualquer outra forma, a que tiverem acesso em decorrência deste Contrato, em especial aquelas que contenham, dados pessoais, informações técnicas, estratégicas, econômicas ou de mercado das Partes, salvo mediante autorização escrita em contrário.",
+      ),
     ]),
   );
   k.push(
     P([
       B("Parágrafo 2º: "),
-      R("Eventual obrigação de sigilo relativa às informações incluídas e/ou extraídas do Software FOOTLINK é de responsabilidade do CONTRATANTE quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança tecnológica."),
+      R("Eventual obrigação de sigilo relativa às informações incluídas e/ou extraídas do Software FOOTLINK é de responsabilidade do CONTRATANTE."),
     ]),
   );
   k.push(
@@ -898,7 +916,9 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B("Parágrafo 4º: "),
-      R("É vedada a divulgação de informações confidenciais salvo consentimento expresso, admitido o fornecimento por ordem judicial/administrativa mediante notificação prévia. A disposição perdura durante a vigência e por 05 (cinco) anos após o término."),
+      R(
+        "É vedada a divulgação de informações confidenciais salvo consentimento expresso, admitido o fornecimento por ordem judicial/administrativa mediante notificação prévia. A disposição perdura durante a vigência e por 05 (cinco) anos após o término. Não são consideradas Informações Confidenciais as informações que: (i) sejam de domínio público; ou (ii) já estejam em poder da outra parte e tenham sido obtidas de forma lícita.",
+      ),
     ]),
   );
   if (D.robusta) {
@@ -946,7 +966,17 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B(CL(nDisp4)),
-      R("Este ajuste somente poderá ser alterado, substituído, rescindido, renovado ou prorrogado por instrumento escrito assinado pelas partes, constituindo o entendimento completo entre elas, obrigando sucessores; eventos de força maior serão comunicados de imediato; a tolerância quanto a atraso não altera as condições pactuadas."),
+      R(
+        "Este ajuste somente poderá ser alterado, substituído, rescindido, renovado ou prorrogado por instrumento escrito assinado pelas partes, constituindo o entendimento completo entre elas, obrigando sucessores e substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos; eventos de força maior serão comunicados de imediato; a tolerância quanto a atraso não altera as condições pactuadas.",
+      ),
+    ]),
+  );
+  k.push(
+    P([
+      B(CL(nDisp5)),
+      R(
+        "Fica expressa e irrevogavelmente avençado que a abstenção do exercício, por qualquer das partes, de direito ou faculdade que lhes assistam em razão deste ajuste, ou a concordância com o atraso no cumprimento das obrigações da outra parte não afetará aquele direito ou faculdade, os quais poderão ser exercidos, a qualquer tempo, a exclusivo critério de seu titular, e tampouco alterará as condições pactuadas neste termo.",
+      ),
     ]),
   );
 

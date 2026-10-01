@@ -51,7 +51,7 @@ const PedidoPayloadSchema = z.object({
   vigenciaInicio: z.string().min(1),
   vigenciaFim: z.string().min(1),
   robusta: z.boolean().default(false),
-  divulgacao: z.enum(["nenhuma", "simples", "obrigacao"]).default("nenhuma"),
+  divulgacao: z.enum(["nenhuma", "simples", "obrigacao"]).default("simples"),
   percentualDescontoDivulgacao: z.number().nonnegative().optional(),
   postDivulgacao: z.string().optional(),
   apiModelo: z.enum(["combinado", "distintos"]).optional(),
