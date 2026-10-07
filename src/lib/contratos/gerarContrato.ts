@@ -563,8 +563,7 @@ export function gerarContrato(D: DadosContrato): Document {
   const nDisp2 = nDisp1 + 1;
   const nDisp3 = nDisp2 + 1;
   const nDisp4 = nDisp3 + 1;
-  const nDisp5 = nDisp4 + 1;
-  const nForo = nDisp5 + 1;
+  const nForo = nDisp4 + 1;
 
   k.push(H("INSTRUMENTO PARTICULAR DE USO DO SOFTWARE FOOTLINK"));
 
@@ -638,7 +637,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 2º: "),
       R(
-        "Todas as modificações, melhorias, correções e novas versões do software FOOTLINK ou de obras derivadas, mesmo que informadas, solicitadas e, eventualmente, pagas pela CONTRATANTE, ficarão incorporadas ao software FOOTLINK e sujeitas a este Contrato, podendo ser disponibilizadas/comercializadas pela CONTRATADA a terceiros.",
+        "Todas as modificações, melhorias, correções e novas versões do software FOOTLINK ou de obras derivadas, mesmo que informadas, solicitadas e, eventualmente, pagas pela CONTRATANTE, ficarão incorporadas ao software FOOTLINK e sujeitas aos termos e condições deste Contrato, podendo, inclusive, ser disponibilizada/comercializada pela CONTRATADA a terceiros, assim como a CONTRATANTE poderá, também, receber melhorias de funcionamento, correções e novos recursos do software FOOTLINK que tenham sido informados, solicitados e, eventualmente, pagos por terceiros.",
       ),
     ]),
   );
@@ -665,7 +664,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 1º: "),
       R(
-        "Os serviços técnicos de suporte e manutenção serão efetuados desde que não causados por: (i) negligência ou uso inadequado do Software; ou (ii) uso do Software para fins diversos do projetado.",
+        "Os Serviços técnicos de suporte e manutenção serão efetuados pela CONTRATADA desde que não sejam causados por: (i) Negligência ou uso inadequado do Software pela CONTRATANTE; ou (ii) Uso do Software pela CONTRATANTE para fins diversos do qual foi projetado.",
       ),
     ]),
   );
@@ -676,7 +675,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("Parágrafo 2º: "),
       R(
-        `Partindo-se da premissa de que em prestação de serviços na área de informática não existe garantia integral de manutenção do Software no ar durante 100% do tempo, ${sla}, ressalvadas: (i) interrupções para ajustes técnicos ou manutenção; (ii) intervenções emergenciais de segurança; e (iii) suspensão por determinação de autoridades competentes ou por descumprimento contratual.`,
+        `Partindo-se da premissa de que em prestação de serviços na área de informática não existe garantia integral de manutenção do Software no ar durante 100% (cem por cento) do tempo, ${sla}, ressalvadas as seguintes hipóteses: i. Interrupções necessárias para ajustes técnicos ou manutenção; ii. Intervenções emergenciais decorrentes da necessidade de preservar a segurança do Software; iii. Suspensão da prestação dos Serviços contratados por determinação de autoridades competentes, ou por descumprimento de cláusulas do presente Contrato.`,
       ),
     ]),
   );
@@ -693,7 +692,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("CLÁUSULA QUINTA: "),
       R(
-        "O suporte para acesso e uso do FOOTLINK será prestado pela CONTRATADA através de seus sócios, empregados, estagiários e, eventualmente, por profissionais especialmente contratados.",
+        "O suporte para acesso e uso do FOOTLINK será prestado pela CONTRATADA através de seus sócios, empregados, estagiários e, eventualmente, por profissionais especialmente contratados em virtude de suas habilidades e conhecimentos técnicos específicos.",
       ),
     ]),
   );
@@ -857,7 +856,7 @@ export function gerarContrato(D: DadosContrato): Document {
     P([
       B("CLÁUSULA NONA: "),
       R(
-        `O não pagamento no prazo ajustado implicará a incidência de juros de mora de 1% (um por cento) ao mês e multa de 2% (dois por cento), ambos sobre o valor em atraso, com correção pelo IGPM-FGV até o efetivo pagamento. O inadimplemento superior a 30 (trinta) dias autorizará o imediato cancelamento da licença e a suspensão das senhas de acesso ao Software Footlink${D.api ? " e ao API do FOOTLINK" : ""}, a critério da CONTRATADA, sem prejuízo da rescisão prevista na Cláusula ${ORD[nRescisao]}.`,
+        `O não pagamento no prazo ajustado implicará a incidência de juros de mora de 1% (um por cento) ao mês e multa de 2% (dois por cento), ambos sobre o valor em atraso, com correção pelo IGPM-FGV até o efetivo pagamento. O inadimplemento superior a 30 (trinta) dias autorizará o imediato cancelamento da licença e a suspensão das senhas de acesso ao Software Footlink${D.api ? " e ao API do FOOTLINK" : ""}, a critério da CONTRATADA, sem prejuízo da rescisão prevista na Cláusula ${ORD[nRescisao]}, incluindo a aplicação da penalidade contratual estipulada no referido dispositivo.`,
       ),
     ]),
   );
@@ -894,7 +893,7 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B(CL(nConfid)),
-      R("A CONTRATADA obriga-se expressamente a manter em estrito sigilo as informações confidenciais recebidas, bem como a não utilizá-las para outros fins. Da mesma forma, o CONTRATANTE obriga-se a não divulgar ou repassar a terceiros as metodologias e tecnologias da CONTRATADA, mantendo sigilo das informações recebidas."),
+      R("A CONTRATADA obriga-se expressamente a manter em estrito sigilo as informações confidenciais recebidas, bem como a não utilizá-las para outros fins. Da mesma forma, o CONTRATANTE obriga-se a não utilizar isoladamente, divulgar ou repassar para terceiros as metodologias e tecnologias utilizadas pela CONTRATADA, bem como a manter em estrito sigilo as informações confidenciais dela recebidas."),
     ]),
   );
   k.push(
@@ -908,20 +907,22 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B("Parágrafo 2º: "),
-      R("Eventual obrigação de sigilo relativa às informações incluídas e/ou extraídas do Software FOOTLINK é de responsabilidade do CONTRATANTE."),
+      R("Eventual obrigação de sigilo e confidencialidade relativa às informações incluídas e/ou extraídas do Software FOOTLINK é de exclusiva responsabilidade do CONTRATANTE."),
     ]),
   );
   k.push(
     P([
       B("Parágrafo 3º: "),
-      R("Não há restrição de divulgação quando: a) a informação se torna pública por outra via que não a Parte Receptora; b) é obtida de terceiros com autorização; c) já era de conhecimento prévio da Parte Receptora."),
+      R(
+        "Não há restrição de divulgação de informações quando: a) a informação se torna pública ou disponível ao público de outra maneira do que através da Parte Receptora; b) quando a informação é obtida através de terceiros com autorização para revelar tal informação; e c) quando puder ser demonstrado para a Parte Reveladora, que a informação já era do conhecimento prévio da Parte Receptora no momento de seu recebimento.",
+      ),
     ]),
   );
   k.push(
     P([
       B("Parágrafo 4º: "),
       R(
-        "É vedada a divulgação de informações confidenciais salvo consentimento expresso, admitido o fornecimento por ordem judicial/administrativa mediante notificação prévia. A disposição perdura durante a vigência e por 05 (cinco) anos após o término. Não são consideradas Informações Confidenciais as informações que: (i) sejam de domínio público; ou (ii) já estejam em poder da outra parte e tenham sido obtidas de forma lícita.",
+        "É vedada a divulgação pelas partes, a qualquer tempo e sob qualquer forma, de dados, criações e informações confidenciais obtidos em virtude deste ajuste (“Informações Confidenciais”), salvo com o expresso consentimento da outra parte. Não são consideradas Informações Confidenciais as informações que: (i) sejam de domínio público; ou (ii) já estejam em poder da outra parte e tenham sido obtidas de forma lícita. É permitido o fornecimento de Informações Confidenciais em razão de ordem administrativa ou judicial emitida por autoridade competente, não excedido o limite de tal ordem, desde que a parte que a recebeu notifique outra parte previamente ao fornecimento, por escrito, dando a esta última, na medida do possível, tempo hábil para pleitear as medidas de proteção do sigilo que julgar cabíveis. A presente disposição perdurará durante a vigência deste ajuste e pelo prazo de 05 (cinco) anos a contar do seu término.",
       ),
     ]),
   );
@@ -940,7 +941,9 @@ export function gerarContrato(D: DadosContrato): Document {
   k.push(
     P([
       B("Parágrafo 6º: "),
-      R("Serão consideradas confidenciais, ainda, as informações identificadas como tais pelas partes ou que, pela natureza ou circunstâncias da revelação, devam ser assim consideradas."),
+      R(
+        "Serão, ainda, consideradas informações confidenciais todas aquelas não listadas acima, mas, que assim forem identificadas pelas partes, através de legendas ou quaisquer outras marcações, ou que, devido às circunstâncias da revelação ou a própria natureza da informação, devam ser consideradas como confidenciais.",
+      ),
     ]),
   );
   k.push(
@@ -967,17 +970,36 @@ export function gerarContrato(D: DadosContrato): Document {
       R("Encerrada a vigência sem prorrogação, as informações inseridas serão entregues em arquivo “csv” e, após, imediatamente excluídas junto com as senhas e logins de acesso."),
     ]),
   );
+  // Confirmado contra contrato real feito pelo jurídico (Boavista, out/2026):
+  // é UMA cláusula com 3 parágrafos (sucessores/inadimplemento, força maior,
+  // tolerância/renúncia) — não 2 cláusulas separadas como a versão anterior.
   k.push(
     P([
       B(CL(nDisp4)),
       R(
-        "Este ajuste somente poderá ser alterado, substituído, rescindido, renovado ou prorrogado por instrumento escrito assinado pelas partes, constituindo o entendimento completo entre elas, obrigando sucessores e substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos; eventos de força maior serão comunicados de imediato; a tolerância quanto a atraso não altera as condições pactuadas.",
+        "Este ajuste somente poderá ser alterado, substituído, rescindido, renovado ou prorrogado por instrumento escrito assinado pelas partes, além de constituir o entendimento completo entre as partes, substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos.",
       ),
     ]),
   );
   k.push(
     P([
-      B(CL(nDisp5)),
+      B("Parágrafo 1º: "),
+      R(
+        "O presente ajuste obriga as partes e seus sucessores a qualquer título, sendo certo que o inadimplemento de obrigações das partes neste ajuste poderá se verificar por ato ou fato imputável às PARTES ou a terceiros em nome das PARTES.",
+      ),
+    ]),
+  );
+  k.push(
+    P([
+      B("Parágrafo 2º: "),
+      R(
+        "A parte afetada por qualquer evento de força maior ou caso fortuito comunicará o fato à outra parte imediatamente, esclarecendo as circunstâncias, as ações em curso para amenizar as perdas e solucionar o ocorrido, o tempo estimado de duração e tudo o mais que for necessário à compreensão do fato, suas consequências e solução.",
+      ),
+    ]),
+  );
+  k.push(
+    P([
+      B("Parágrafo 3º: "),
       R(
         "Fica expressa e irrevogavelmente avençado que a abstenção do exercício, por qualquer das partes, de direito ou faculdade que lhes assistam em razão deste ajuste, ou a concordância com o atraso no cumprimento das obrigações da outra parte não afetará aquele direito ou faculdade, os quais poderão ser exercidos, a qualquer tempo, a exclusivo critério de seu titular, e tampouco alterará as condições pactuadas neste termo.",
       ),

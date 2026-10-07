@@ -251,18 +251,27 @@ const PANTANAL: CasoTeste = {
     dataGeracao: new Date(2026, 2, 20), // 20/03/2026
   },
   divergenciasAceitas: [
-    "Cláusula Décima (divulgação 'simples') ganha 'em seu site e' antes de 'em suas redes sociais' — revisão " +
-      "jurídica estendendo a autorização de menção também ao site da Footure, não só redes sociais.",
-    "Confidencialidade (revisão jurídica, contrato Londrina, set/2026): Parágrafo 1º reescrito (redação mais " +
-      "completa), Parágrafo 2º perde o trecho 'quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança " +
-      "tecnológica', Parágrafo 4º ganha a exceção de domínio público/posse lícita prévia — PANTANAL_teste.docx é " +
-      "anterior a essa revisão.",
-    "Disposições gerais ganham uma cláusula nova de tolerância/renúncia (entre a de 'instrumento escrito' e o " +
-      "Foro) — desloca o Foro de Cláusula Décima Nona pra Vigésima; a cláusula de 'instrumento escrito' também " +
-      "ganha o trecho 'e substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos'.",
-    "Cláusula Oitava ganha um 'Parágrafo único' novo sobre pagamento antecipado/vigência inicial da licença — " +
-      "aditivo (não aparece como divergência no diff, que só reporta linha do modelo ausente no gerado), citado " +
-      "aqui só pra rastreabilidade.",
+    "Cláusula Décima (divulgação 'simples') ganha 'em seu site e' antes de 'em suas redes sociais'.",
+    "Cláusula Segunda §2º ganha frase final sobre CONTRATANTE também poder receber melhorias pagas por terceiros.",
+    "Cláusula Terceira §1º/§2º reescritos (redação mais precisa/formal, mesmo sentido).",
+    "Cláusula Quinta ganha 'em virtude de suas habilidades e conhecimentos técnicos específicos' no final.",
+    "Cláusula Nona ganha 'incluindo a aplicação da penalidade contratual estipulada no referido dispositivo' no final.",
+    "Cláusula Décima Segunda (multa) ganha 'vigentes no momento da rescisão' — ver multa.ts.",
+    "Cláusula Décima Terceira (intro) reescrita: CONTRATANTE também fica proibido de 'utilizar isoladamente' as " +
+      "metodologias/tecnologias da CONTRATADA, não só divulgar/repassar.",
+    "Confidencialidade: Parágrafo 1º reescrito (redação mais completa), §2º perde 'quanto ao uso interno, e da " +
+      "CONTRATADA quanto à guarda e segurança tecnológica' e ganha 'e confidencialidade'/'exclusiva', §3º e §6º " +
+      "reescritos (mesmo sentido, mais formais), §4º substituído pelo texto completo (exceção de domínio " +
+      "público/posse lícita + regra de ordem judicial/administrativa com notificação prévia).",
+    "Disposições gerais: a cláusula de 'instrumento escrito' (Décima Oitava aqui) perde a parte de sucessores/força " +
+      "maior/tolerância do corpo do texto e ganha 'e substituindo quaisquer acordos ou entendimentos anteriores, " +
+      "verbais ou escritos' — esse conteúdo (sucessores/inadimplemento, força maior, tolerância) vira 3 parágrafos " +
+      "novos (§1º/§2º/§3º) da MESMA cláusula, não clássulas separadas; Foro continua Décima Nona (sem deslocar).",
+    "Cláusula Oitava ganha um 'Parágrafo único' novo sobre pagamento antecipado/vigência inicial da licença.",
+    "Tudo acima confirmado contra dois contratos reais: revisão jurídica no contrato Londrina (comentários, " +
+      "set/2026) e comparação direta com contrato feito manualmente pelo jurídico pro Boavista (out/2026) — " +
+      "PANTANAL_teste.docx é anterior a ambos. Aditivos (parágrafos novos) não aparecem no diff, que só reporta " +
+      "linha do modelo ausente no gerado — citados aqui só pra rastreabilidade.",
   ],
 };
 
@@ -308,14 +317,26 @@ const ELENKO_TESTE: CasoTeste = {
       "do documento original observada no caso ELENKO antigo); o gerador segue a convenção gramatical padrão com vírgula",
     "bloco de assinatura mostra o nome dos 2 representantes cadastrados em vez de só 'ELENKO SPORTS LTDA' — " +
       "capacidade nova pedida explicitamente (N representantes assináveis, necessária pra Fase 3/Clicksign)",
-    "Confidencialidade (revisão jurídica, contrato Londrina, set/2026): Parágrafo 1º reescrito, Parágrafo 2º perde " +
-      "o trecho 'quanto ao uso interno, e da CONTRATADA quanto à guarda e segurança tecnológica', Parágrafo 4º " +
-      "ganha a exceção de domínio público/posse lícita prévia — ELENKO_teste.docx é anterior a essa revisão.",
-    "Disposições gerais ganham a cláusula nova de tolerância/renúncia — desloca o Foro de Cláusula Décima Oitava " +
-      "pra Décima Nona; a cláusula de 'instrumento escrito' (Décima Sétima aqui, divulgação='nenhuma' não desloca) " +
-      "ganha o trecho 'e substituindo quaisquer acordos ou entendimentos anteriores, verbais ou escritos'.",
-    "Cláusula Oitava ganha o 'Parágrafo único' novo sobre pagamento antecipado/vigência inicial — aditivo, citado " +
-      "aqui só pra rastreabilidade (não aparece no diff).",
+    "Cláusula Segunda §2º ganha frase final sobre CONTRATANTE também poder receber melhorias pagas por terceiros.",
+    "Cláusula Terceira §1º/§2º reescritos (redação mais precisa/formal, mesmo sentido).",
+    "Cláusula Quinta ganha 'em virtude de suas habilidades e conhecimentos técnicos específicos' no final.",
+    "Cláusula Nona ganha 'incluindo a aplicação da penalidade contratual estipulada no referido dispositivo' no final.",
+    "Cláusula Décima Segunda (multa) ganha 'vigentes no momento da rescisão' — ver multa.ts.",
+    "Cláusula Décima Terceira (intro) reescrita: CONTRATANTE também fica proibido de 'utilizar isoladamente' as " +
+      "metodologias/tecnologias da CONTRATADA, não só divulgar/repassar.",
+    "Confidencialidade: Parágrafo 1º reescrito, §2º perde 'quanto ao uso interno, e da CONTRATADA quanto à guarda " +
+      "e segurança tecnológica' e ganha 'e confidencialidade'/'exclusiva', §3º e §6º reescritos (mesmo sentido, " +
+      "mais formais), §4º substituído pelo texto completo (domínio público/posse lícita + ordem " +
+      "judicial/administrativa com notificação prévia).",
+    "Disposições gerais: a cláusula de 'instrumento escrito' (Décima Sétima aqui, divulgação='nenhuma' não " +
+      "desloca) perde a parte de sucessores/força maior/tolerância do corpo do texto e ganha 'e substituindo " +
+      "quaisquer acordos ou entendimentos anteriores, verbais ou escritos' — esse conteúdo vira 3 parágrafos novos " +
+      "(§1º/§2º/§3º) da MESMA cláusula, não cláusulas separadas; Foro continua Décima Oitava (sem deslocar).",
+    "Cláusula Oitava ganha o 'Parágrafo único' novo sobre pagamento antecipado/vigência inicial.",
+    "Tudo acima confirmado contra dois contratos reais: revisão jurídica no contrato Londrina (comentários, " +
+      "set/2026) e comparação direta com contrato feito manualmente pelo jurídico pro Boavista (out/2026) — " +
+      "ELENKO_teste.docx é anterior a ambos. Aditivos (parágrafos novos) não aparecem no diff, citados aqui só " +
+      "pra rastreabilidade.",
   ],
 };
 
